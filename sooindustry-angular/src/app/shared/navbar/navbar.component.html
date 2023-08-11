@@ -1,0 +1,34 @@
+<nav class="navbar navbar-expand-lg fixed-top navbar-transparent" color-on-scroll="500">
+    <div class="container">
+        <div class="navbar-translate">
+            <a class="navbar-brand"><img src="./assets/img/sooin-logo.gif">SOOIN Industry</a>
+            <button class="navbar-toggler navbar-burger" type="button" data-toggle="collapse" data-target="#navbarToggler" aria-controls="navbarTogglerDemo02" aria-expanded="false" aria-label="Toggle navigation" (click)="sidebarToggle()">
+                <span class="navbar-toggler-bar"></span>
+                <span class="navbar-toggler-bar"></span>
+                <span class="navbar-toggler-bar"></span>
+            </button>
+        </div>
+        <div class="navbar-collapse" id="navbarToggler">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item" *ngIf="!isDocumentation()">
+                    <a class="nav-link" rel="tooltip" data-placement="bottom" [routerLink]="['/landing']">
+                        <i class="nc-icon nc-alert-circle-i"></i>
+                        회사소개
+                    </a>
+                </li>
+                <li class="nav-item" *ngIf="!isDocumentation()">
+                    <a class="nav-link" rel="tooltip" data-placement="bottom" [routerLink]="['/products']">
+                        <i class="nc-icon nc-box"></i>
+                        제품소개
+                    </a>
+                </li>
+                <li class="nav-item" *ngIf="!isDocumentation()">
+                    <a class="nav-link" rel="tooltip" data-placement="bottom" [routerLink]="['/customer-support']">
+                        <i class="nc-icon nc-satisfied"></i>
+                        고객지원
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
