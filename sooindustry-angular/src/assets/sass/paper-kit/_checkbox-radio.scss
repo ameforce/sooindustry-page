@@ -51,11 +51,6 @@
 
 }
 
-.form-check.disabled .form-check-label,
-.form-check.disabled .form-check-label {
-
-}
-
 .form-check input[type="checkbox"],
 .form-check-radio input[type="radio"]{
     opacity: 0;
@@ -79,10 +74,6 @@
 .form-check-radio{
     .form-check-label{
         padding-left: 2rem;
-
-        .form-check-sign::after{
-
-        }
     }
     &.disabled{
         .form-check-label{
