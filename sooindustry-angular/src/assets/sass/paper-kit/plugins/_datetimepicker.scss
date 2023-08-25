@@ -53,6 +53,7 @@ ngb-datepicker{
                     border: none !important;
                     background: transparent!important;
                     -webkit-appearance: menulist !important;
+                    appearance: menulist;
                 }
             }
 
@@ -86,9 +87,6 @@ ngb-datepicker{
                     }
                     div[ng-reflect-selected="true"]{
                         background-color: $primary-color !important;
-                    }
-                    &:focus{
-
                     }
                 }
             }

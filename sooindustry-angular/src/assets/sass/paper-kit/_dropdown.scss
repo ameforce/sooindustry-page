@@ -122,9 +122,6 @@
     right: auto;
 }
 //fix bug for the select items in btn-group
-.btn-group.select{
-    // overflow: hidden;
-}
 .btn-group.select.open{
     overflow: visible;
 }
