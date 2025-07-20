@@ -1,4 +1,14 @@
 /* You can add global styles to this file, and also import other style files */
+
+/* Bootstrap CSS */
+@import 'assets/css/bootstrap.min.css';
+
+/* Nucleo Icons */
+@import 'assets/css/nucleo-icons.css';
+
+/* Paper Kit theme */
+@import 'assets/sass/paper-kit.scss';
+
 .router-outlet{
     overflow:hidden;
 }

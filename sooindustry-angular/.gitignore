@@ -4,15 +4,22 @@
 /dist
 /tmp
 /out-tsc
+
+
+# Only exists if Bazel was run
 /bazel-out
 
-# Node
+# Dependencies
 /node_modules
-npm-debug.log
-yarn-error.log
+
+# profiling files
+chrome-profiler-events*.json
+
+# Angular files
+.angular
 
 # IDEs and editors
-.idea/
+/.idea
 .project
 .classpath
 .c9/
@@ -20,7 +27,7 @@ yarn-error.log
 .settings/
 *.sublime-workspace
 
-# Visual Studio Code
+# IDE - VSCode
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json
@@ -28,15 +35,32 @@ yarn-error.log
 !.vscode/extensions.json
 .history/*
 
-# Miscellaneous
-/.angular/cache
-.sass-cache/
+# misc
+/.sass-cache
 /connect.lock
 /coverage
 /libpeerconnection.log
-testem.log
-/typings
+npm-debug.log
+yarn-error.log
 
-# System files
-.DS_Store
+# System Files
 Thumbs.db
+
+# Temporary log files and version checks
+*_versions.txt
+*_audit.txt
+*_build*.txt
+*_install*.txt
+*_test*.txt
+*_fix.txt
+check_version.txt
+cli_version.txt
+current_audit.txt
+deprecated_check.txt
+final_test.txt
+force_fix.txt
+npm_*.txt
+post_fix_build.txt
+prod_build.txt
+restore_install.txt
+update_install.txt
