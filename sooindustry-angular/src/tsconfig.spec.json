@@ -3,12 +3,15 @@
   "extends": "../tsconfig.json",
   "compilerOptions": {
     "outDir": "../out-tsc/spec",
+    "isolatedModules": true,
     "types": [
-      "jasmine"
+      "jest",
+      "node"
     ]
   },
   "include": [
-    "src/**/*.spec.ts",
-    "src/**/*.d.ts"
+    "**/*.spec.ts",
+    "**/*.d.ts",
+    "polyfills.ts"
   ]
 }

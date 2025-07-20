@@ -1,38 +1,40 @@
-import { Component, OnInit, Renderer2 } from '@angular/core';
-import { NgbDateStruct } from '@ng-bootstrap/ng-bootstrap';
+import { Component, OnInit, Renderer2, ElementRef } from '@angular/core';
 
 @Component({
-  selector: 'app-components',
-  templateUrl: './components.component.html',
-  styleUrls: ['./components.component.scss']
+    selector: 'app-components',
+    templateUrl: './components.component.html',
+    styleUrls: ['./components.component.scss'],
+    standalone: false
 })
 export class ComponentsComponent implements OnInit {
-  page = 4;
-  page1 = 5;
-  focus: any;
-  focus1: any;
-  focus2: any;
-  date!: {year: number, month: number};
-  model!: NgbDateStruct;
-  constructor( private renderer : Renderer2 ) {}
-  isWeekend(date: NgbDateStruct) {
-    const d = new Date(date.year, date.month - 1, date.day);
-    return d.getDay() === 0 || d.getDay() === 6;
+  page: number = 4;
+  page1: number = 5;
+  focus: boolean = false;
+  focus1: boolean = false;
+  focus2: boolean = false;
+
+  constructor(private renderer: Renderer2, private elementRef: ElementRef) {}
+
+
+
+  ngOnInit(): void {
+    this.setupInputGroupFocus();
   }
 
-  isDisabled(date: NgbDateStruct, current: {month: number}) {
-    return date.month !== current.month;
-  }
-
-  ngOnInit() {
-    let input_group = document.getElementsByClassName('input-group');
-    for (let i = 0; i < input_group.length; i++) {
-      input_group[i].children[0].addEventListener('focus', function (){
-        input_group[i].classList.add('input-group-focus');
-      });
-      input_group[i].children[0].addEventListener('blur', function (){
-        input_group[i].classList.remove('input-group-focus');
-      });
-    }
+  private setupInputGroupFocus(): void {
+    const inputGroups = this.elementRef.nativeElement.querySelectorAll('.input-group');
+    
+    inputGroups.forEach((group: HTMLElement) => {
+      const input = group.querySelector('input');
+      if (input) {
+        this.renderer.listen(input, 'focus', () => {
+          this.renderer.addClass(group, 'input-group-focus');
+        });
+        
+        this.renderer.listen(input, 'blur', () => {
+          this.renderer.removeClass(group, 'input-group-focus');
+        });
+      }
+    });
   }
 }

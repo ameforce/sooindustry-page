@@ -1,11 +1,12 @@
 import { Component } from '@angular/core';
 
 @Component({
-  selector: 'app-customer-support',
-  templateUrl: './customer-support.component.html',
-  styleUrls: ['./customer-support.component.scss']
+    selector: 'app-customer-support',
+    templateUrl: './customer-support.component.html',
+    styleUrls: ['./customer-support.component.scss'],
+    standalone: false
 })
 export class CustomerSupportComponent {
-  focus: any;
-  focus1: any;
+  focus: boolean = false;
+  focus1: boolean = false;
 }

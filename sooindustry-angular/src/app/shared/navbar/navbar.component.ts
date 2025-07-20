@@ -1,60 +1,60 @@
 import { Component, OnInit, ElementRef } from '@angular/core';
 import { Location } from '@angular/common';
-import { NONE_TYPE } from '@angular/compiler';
 
 @Component({
-  selector: 'app-navbar',
-  templateUrl: './navbar.component.html',
-  styleUrls: ['./navbar.component.scss']
+    selector: 'app-navbar',
+    templateUrl: './navbar.component.html',
+    styleUrls: ['./navbar.component.scss'],
+    standalone: false
 })
 export class NavbarComponent implements OnInit {
-  private toggleButton: any = 0;
-  private sidebarVisible: boolean = true;
+  private toggleButton: HTMLElement | null = null;
+  private sidebarVisible: boolean = false;
 
   constructor(public location: Location, private element: ElementRef) {
     this.sidebarVisible = false;
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     const navbar: HTMLElement = this.element.nativeElement;
-    this.toggleButton = navbar.getElementsByClassName('navbar-toggler')[0];
+    const toggleElements = navbar.getElementsByClassName('navbar-toggler');
+    this.toggleButton = toggleElements.length > 0 ? toggleElements[0] as HTMLElement : null;
   }
-  sidebarOpen() {
-    const toggleButton = this.toggleButton;
+
+  sidebarOpen(): void {
+    if (!this.toggleButton) return;
+    
     const html = document.getElementsByTagName('html')[0];
-
-    setTimeout(function(){
-      toggleButton.classList.add('toggled');
+    
+    setTimeout(() => {
+      this.toggleButton?.classList.add('toggled');
     }, 500);
+    
     html.classList.add('nav-open');
-
     this.sidebarVisible = true;
-  };
-  sidebarClose() {
+  }
+
+  sidebarClose(): void {
+    if (!this.toggleButton) return;
+    
     const html = document.getElementsByTagName('html')[0];
     this.toggleButton.classList.remove('toggled');
     this.sidebarVisible = false;
     html.classList.remove('nav-open');
-  };
-  sidebarToggle() {
-    if (this.sidebarVisible === false) {
-      this.sidebarOpen();
-    } else {
-      this.sidebarClose();
-    }
-  };
-  isHome() {
-    var titlee = this.location.prepareExternalUrl(this.location.path());
-    if (titlee.charAt(0) === '#') {
-      titlee = titlee.slice( 1 );
-    }
-    return titlee === '/home';
   }
-  isDocumentation() {
-    var titlee = this.location.prepareExternalUrl(this.location.path());
-    if (titlee.charAt(0) === '#') {
-      titlee = titlee.slice( 1 );
+
+  sidebarToggle(): void {
+    if (this.sidebarVisible) {
+      this.sidebarClose();
+    } else {
+      this.sidebarOpen();
     }
-    return titlee === '/documentation';
+  }
+  isHome(): boolean {
+    let path = this.location.prepareExternalUrl(this.location.path());
+    if (path.charAt(0) === '#') {
+      path = path.slice(1);
+    }
+    return path === '/home';
   }
 }
