@@ -1,3 +1,5 @@
+@use "../variables" as *;
+
 @mixin popover-style($background-color){
     background-color: $background-color;
     color: $white-color;
@@ -5,17 +7,19 @@
         background-color: $background-color;
         color: rgba(0, 0, 0, 0.56);
     }
-    &.bottom .arrow:after{
+    &[x-placement^="top"] .arrow::after{
+        background-color: $background-color;
+    }
+    &[x-placement^="top"] .arrow{
         border-bottom-color: $background-color;
     }
-    &.left > .arrow::after{
+    &[x-placement^="left"] .arrow{
         border-left-color: $background-color;
     }
-    &.top > .arrow::after{
+    &[x-placement^="bottom"] .arrow{
         border-top-color: $background-color;
     }
-    &.right > .arrow::after{
+    &[x-placement^="right"] .arrow{
         border-right-color: $background-color;
     }
-
 }

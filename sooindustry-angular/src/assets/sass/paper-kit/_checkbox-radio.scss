@@ -1,3 +1,6 @@
+@use "variables" as *;
+@use "mixins/vendor-prefixes" as *;
+
 .form-check,
 .form-check-radio {
   padding: 0;

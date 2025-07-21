@@ -1,3 +1,8 @@
+@use "variables" as *;
+@use "mixins/buttons" as *;
+@use "mixins/vendor-prefixes" as *;
+@use "mixins/transparency" as *;
+
 .btn{
     box-sizing: border-box;
     border-width: $border-thick;

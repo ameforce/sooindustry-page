@@ -1,3 +1,9 @@
+@use "variables" as *;
+@use "mixins/navbars" as *;
+@use "mixins/vendor-prefixes" as *;
+@use "mixins/transparency" as *;
+@use "mixins/inputs" as *;
+
 .nav {
     .nav-item{
         .nav-link:hover,

@@ -1,3 +1,7 @@
+@use "variables" as *;
+@use "mixins/inputs" as *;
+@use "mixins/vendor-prefixes" as *;
+
 .form-control::-moz-placeholder{
    @include placeholder($placeholder-gray,1);
 }

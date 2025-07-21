@@ -1,3 +1,6 @@
+@use "../variables" as *;
+@use "../mixins/vendor-prefixes" as *;
+
 ngb-datepicker{
     border: 0 none !important;
     border-radius: 12px !important;

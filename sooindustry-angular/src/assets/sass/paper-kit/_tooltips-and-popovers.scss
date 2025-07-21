@@ -1,3 +1,7 @@
+@use "variables" as *;
+@use "mixins/popovers" as *;
+@use "mixins/transparency" as *;
+
 .tooltip {
     font-size: $font-size-small;
     font-weight: $font-weight-normal;

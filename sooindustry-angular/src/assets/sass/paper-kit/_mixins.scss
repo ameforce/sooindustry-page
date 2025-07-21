@@ -1,14 +1,14 @@
 //Utilities
 
-@import "mixins/transparency";
-@import "mixins/vendor-prefixes";
+@use "mixins/transparency" as *;
+@use "mixins/vendor-prefixes" as *;
 
 
 //Components
 
-@import "mixins/buttons";
-@import "mixins/inputs";
-@import "mixins/labels";
-@import "mixins/tabs";
-@import "mixins/popovers";
-@import "mixins/navbars";
+@use "mixins/buttons" as *;
+@use "mixins/inputs" as *;
+@use "mixins/labels" as *;
+@use "mixins/tabs" as *;
+@use "mixins/popovers" as *;
+@use "mixins/navbars" as *;
