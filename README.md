@@ -72,8 +72,8 @@ npm run build      # 타입/SCSS 검증 포함 빌드
 루트의 `Dockerfile`은 멀티스테이지로 Next.js를 빌드/런합니다.
 
 ```bash
-docker build -t sooindustry-web .
-docker run -p 3000:3000 sooindustry-web
+docker build -t sooindustry-page .
+docker run --name sooindustry-page -p 14825:14825 sooindustry-page
 ```
 
 ## 🤝 기여 방법
