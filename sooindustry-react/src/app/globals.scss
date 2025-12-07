@@ -1,13 +1,13 @@
-@import "tailwindcss";
+@use "tailwindcss";
 
-@import "../styles/paper-kit.scss";
-@import "../styles/app/shared/navbar/navbar.component.scss";
-@import "../styles/app/shared/footer/footer.component.scss";
-@import "../styles/app/components/home/home.component.scss";
-@import "../styles/app/components/about-us/about-us.component.scss";
-@import "../styles/app/components/customer-support/customer-support.component.scss";
-@import "../styles/app/components/products/products.component.scss";
-@import "../styles/app/components/icon-demo/icon-demo.component.scss";
+@use "../styles/paper-kit.scss" as *;
+@use "../styles/app/shared/navbar/navbar.component.scss" as *;
+@use "../styles/app/shared/footer/footer.component.scss" as *;
+@use "../styles/app/components/home/home.component.scss" as *;
+@use "../styles/app/components/about-us/about-us.component.scss" as *;
+@use "../styles/app/components/customer-support/customer-support.component.scss" as *;
+@use "../styles/app/components/products/products.component.scss" as *;
+@use "../styles/app/components/icon-demo/icon-demo.component.scss" as *;
 
 :root {
   --background: #0b1011;
@@ -32,6 +32,14 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), "Pretendard", "Noto Sans KR", sans-serif;
   min-height: 100vh;
+}
+
+.nc-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+  line-height: 1;
 }
 
 body.scroll-lock {

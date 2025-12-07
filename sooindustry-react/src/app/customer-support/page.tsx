@@ -59,10 +59,15 @@ export default function CustomerSupportPage() {
 
                   <div className="quick-contact-buttons mt-4">
                     {quickActions.map((action) => (
-                      <button key={action.label} type="button" className={action.classes}>
+                      <a
+                        key={action.label}
+                        className={action.classes}
+                        href={action.href}
+                        aria-label={action.ariaLabel ?? action.label}
+                      >
                         <i className={`nc-icon ${action.icon}`} aria-hidden="true" />
                         {action.label}
-                      </button>
+                      </a>
                     ))}
                   </div>
                 </div>
@@ -126,32 +131,42 @@ export default function CustomerSupportPage() {
           </div>
 
           <div className="row">
-            {contactMethods.map((method) => (
-              <div key={method.title} className="col-md-4 mb-4">
-                <div className="contact-method">
-                  <div className="method-icon">
-                    <i className={`nc-icon ${method.icon}`} aria-hidden="true" />
-                  </div>
-                  <h4>{method.title}</h4>
-                  <p>{method.description}</p>
-                  <div className="contact-details">
-                    {method.details.map((detail) => (
-                      <div key={detail.label} className="contact-detail-item">
-                        <strong>{detail.label}</strong>
-                        {detail.isHtml ? (
-                          <span
-                            className="address-text"
-                            dangerouslySetInnerHTML={{ __html: detail.value }}
-                          />
-                        ) : (
-                          <span>{detail.value}</span>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+            {contactMethods.map((method) => {
+              const isExternalLink = method.isExternal ?? method.href.startsWith("http");
+
+              return (
+                <div key={method.title} className="col-md-4 mb-4">
+                  <a
+                    className="contact-method"
+                    href={method.href}
+                    aria-label={method.ariaLabel ?? method.title}
+                    target={isExternalLink ? "_blank" : undefined}
+                    rel={isExternalLink ? "noopener noreferrer" : undefined}
+                  >
+                    <div className="method-icon">
+                      <i className={`nc-icon ${method.icon}`} aria-hidden="true" />
+                    </div>
+                    <h4>{method.title}</h4>
+                    <p>{method.description}</p>
+                    <div className="contact-details">
+                      {method.details.map((detail) => (
+                        <div key={detail.label} className="contact-detail-item">
+                          <strong>{detail.label}</strong>
+                          {detail.isHtml ? (
+                            <span
+                              className="address-text"
+                              dangerouslySetInnerHTML={{ __html: detail.value }}
+                            />
+                          ) : (
+                            <span>{detail.value}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </a>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
@@ -166,20 +181,41 @@ export default function CustomerSupportPage() {
 
               <div className="additional-info mt-5">
                 <div className="row">
-                  {additionalResources.map((resource) => (
-                    <div key={resource.title} className="col-md-6 mb-4">
-                      <div className="info-showcase">
+                  {additionalResources.map((resource) => {
+                    const isExternalLink = resource.href ? resource.href.startsWith("http") && !resource.downloadName : false;
+
+                    const content = (
+                      <>
                         <img src={resource.image} alt={resource.alt} className="img-fluid rounded" loading="lazy" />
                         <h5 className="mt-3">{resource.title}</h5>
                         <p>{resource.description}</p>
+                      </>
+                    );
+
+                    return (
+                      <div key={resource.title} className="col-md-6 mb-4">
+                        {resource.href ? (
+                          <a
+                            className="info-showcase"
+                            href={resource.href}
+                            aria-label={resource.ariaLabel ?? resource.title}
+                            download={resource.downloadName}
+                            target={isExternalLink ? "_blank" : undefined}
+                            rel={isExternalLink ? "noopener noreferrer" : undefined}
+                          >
+                            {content}
+                          </a>
+                        ) : (
+                          <div className="info-showcase">{content}</div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
 
               <div className="final-cta mt-5">
-                <a href="/products" className="btn btn-danger btn-round btn-lg mr-3">
+                <a href="/products" className="btn btn-danger btn-round btn-lg">
                   <i className="nc-icon nc-app" aria-hidden="true" />
                   제품 보기
                 </a>

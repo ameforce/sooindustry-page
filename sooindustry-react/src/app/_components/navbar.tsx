@@ -31,6 +31,11 @@ export function Navbar() {
     };
   }, []);
 
+  const visibleLinks = useMemo(
+    () => navLinks.filter((link) => !link.devOnly || process.env.NODE_ENV !== "production"),
+    []
+  );
+
   const activeHrefSet = useMemo(() => {
     if (!pathname) {
       return new Set<string>();
@@ -70,7 +75,7 @@ export function Navbar() {
           id="navbarToggler"
         >
           <ul className="navbar-nav">
-            {navLinks.map((link) => (
+            {visibleLinks.map((link) => (
               <li
                 key={link.href}
                 className={clsx("nav-item", {

@@ -11,9 +11,6 @@ export default function CompanyIntroSection() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
-    if (!isMobile) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -27,21 +24,18 @@ export default function CompanyIntroSection() {
         });
       },
       {
-        threshold: 0.6,
+        threshold: 0.45,
+        rootMargin: "0px 0px -10% 0px",
       }
     );
 
-    if (imageRef.current) {
-      observer.observe(imageRef.current);
-    }
+    const targets = [
+      imageRef.current,
+      ...infoRefs.current,
+      ...featureRefs.current,
+    ].filter(Boolean) as HTMLElement[];
 
-    infoRefs.current.forEach((el) => {
-      if (el) observer.observe(el);
-    });
-
-    featureRefs.current.forEach((el) => {
-      if (el) observer.observe(el);
-    });
+    targets.forEach((el) => observer.observe(el));
 
     return () => {
       observer.disconnect();

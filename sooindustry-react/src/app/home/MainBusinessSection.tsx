@@ -9,9 +9,6 @@ export default function MainBusinessSection() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const isMobile = window.matchMedia("(max-width: 768px)").matches;
-    if (!isMobile) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -25,7 +22,8 @@ export default function MainBusinessSection() {
         });
       },
       {
-        threshold: 0.6,
+        threshold: 0.45,
+        rootMargin: "0px 0px -10% 0px",
       }
     );
 

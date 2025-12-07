@@ -1,6 +1,12 @@
+import { notFound } from "next/navigation";
 import { iconCatalog } from "@/data/icons";
 
+// 개발 전용 페이지: 프로덕션에서는 404 처리하여 노출 방지
 export default function IconDemoPage() {
+  if (process.env.NODE_ENV === "production") {
+    notFound();
+  }
+
   return (
     <div className="wrapper py-5">
       <div className="container">
@@ -28,3 +34,4 @@ export default function IconDemoPage() {
     </div>
   );
 }
+

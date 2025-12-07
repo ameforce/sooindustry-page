@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   carbonGallery,
   carbonProducts,
@@ -19,6 +19,8 @@ type ModalState = {
   open: boolean;
   image: string;
   title: string;
+  items?: Array<{ image: string; title: string }>;
+  index?: number;
 };
 
 export default function ProductsPage() {
@@ -26,15 +28,58 @@ export default function ProductsPage() {
     open: false,
     image: "",
     title: "",
+    items: undefined,
+    index: undefined,
   });
+  const carbonGalleryRef = useRef<HTMLDivElement | null>(null);
+  const molyGalleryRef = useRef<HTMLDivElement | null>(null);
 
   const handleOpenModal = (image: string, title: string) => {
     if (!image) return;
-    setModalState({ open: true, image, title });
+    setModalState({ open: true, image, title, items: undefined, index: undefined });
   };
 
   const handleCloseModal = () => {
-    setModalState({ open: false, image: "", title: "" });
+    setModalState({ open: false, image: "", title: "", items: undefined, index: undefined });
+  };
+
+  const scrollGallery = (ref: React.RefObject<HTMLDivElement | null>, direction: number) => {
+    const node = ref.current;
+    if (!node) return;
+    const amount = node.clientWidth * 0.8;
+    const maxScroll = node.scrollWidth - node.clientWidth;
+    const target = Math.max(0, Math.min(node.scrollLeft + direction * amount, maxScroll));
+    node.scrollTo({ left: target, behavior: "smooth" });
+  };
+
+  const handleOpenModalWithList = (
+    items: Array<{ image: string; title: string }>,
+    index: number,
+  ) => {
+    const safeIndex = Math.max(0, Math.min(index, items.length - 1));
+    const item = items[safeIndex];
+    setModalState({
+      open: true,
+      image: item.image,
+      title: item.title,
+      items,
+      index: safeIndex,
+    });
+  };
+
+  const handleStep = (direction: 1 | -1) => {
+    if (!modalState.items || modalState.index === undefined) return;
+    const total = modalState.items.length;
+    if (total === 0) return;
+    const nextIndex = (modalState.index + direction + total) % total;
+    const nextItem = modalState.items[nextIndex];
+    setModalState({
+      open: true,
+      image: nextItem.image,
+      title: nextItem.title,
+      items: modalState.items,
+      index: nextIndex,
+    });
   };
 
   return (
@@ -170,19 +215,42 @@ export default function ProductsPage() {
               </div>
             ))}
           </div>
-          <div className="row product-gallery mt-4">
-            {carbonGallery.map((item) => (
-              <div key={item.image} className={item.colClass}>
-                <img
-                  src={item.image}
-                  alt={item.alt}
-                  className="gallery-image"
-                  loading="lazy"
-                  onClick={() => handleOpenModal(item.image, item.title)}
-                  role="button"
-                />
-              </div>
-            ))}
+          <div className="gallery-scroll-wrapper">
+            <button
+              type="button"
+              className="gallery-nav prev"
+              aria-label="이전 이미지"
+              onClick={() => scrollGallery(carbonGalleryRef, -1)}
+            >
+              ‹
+            </button>
+            <div className="gallery-scroll" ref={carbonGalleryRef}>
+            {carbonGallery.map((item, index) => (
+                <div key={item.image} className="gallery-card">
+                  <img
+                    src={item.image}
+                    alt={item.alt}
+                    className="gallery-image"
+                    loading="lazy"
+                    onClick={() =>
+                      handleOpenModalWithList(
+                        carbonGallery.map((g) => ({ image: g.image, title: g.title })),
+                        index,
+                      )
+                    }
+                    role="button"
+                  />
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="gallery-nav next"
+              aria-label="다음 이미지"
+              onClick={() => scrollGallery(carbonGalleryRef, 1)}
+            >
+              ›
+            </button>
           </div>
         </div>
       </div>
@@ -215,19 +283,42 @@ export default function ProductsPage() {
               </div>
             ))}
           </div>
-          <div className="row product-gallery mt-4">
-            {molyGallery.map((item) => (
-              <div key={item.image} className={item.colClass}>
-                <img
-                  src={item.image}
-                  alt={item.alt}
-                  className="gallery-image"
-                  loading="lazy"
-                  onClick={() => handleOpenModal(item.image, item.title)}
-                  role="button"
-                />
-              </div>
-            ))}
+          <div className="gallery-scroll-wrapper">
+            <button
+              type="button"
+              className="gallery-nav prev"
+              aria-label="이전 이미지"
+              onClick={() => scrollGallery(molyGalleryRef, -1)}
+            >
+              ‹
+            </button>
+            <div className="gallery-scroll" ref={molyGalleryRef}>
+            {molyGallery.map((item, index) => (
+              <div key={item.image} className="gallery-card">
+                  <img
+                    src={item.image}
+                    alt={item.alt}
+                    className="gallery-image"
+                    loading="lazy"
+                  onClick={() =>
+                    handleOpenModalWithList(
+                      molyGallery.map((g) => ({ image: g.image, title: g.title })),
+                      index,
+                    )
+                  }
+                    role="button"
+                  />
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              className="gallery-nav next"
+              aria-label="다음 이미지"
+              onClick={() => scrollGallery(molyGalleryRef, 1)}
+            >
+              ›
+            </button>
           </div>
         </div>
       </div>
@@ -239,7 +330,8 @@ export default function ProductsPage() {
             <div className="separator-line-light" />
           </div>
           <div className="row process-flow">
-            {processSteps.map((step) => (
+          {processSteps.map((step, index) => (
+            <>
               <div key={step.step} className="col-lg-6 mb-4">
                 <div className="process-step large-step">
                   <div className="step-number">{step.step}</div>
@@ -262,7 +354,15 @@ export default function ProductsPage() {
                   </div>
                 </div>
               </div>
-            ))}
+              {index < processSteps.length - 1 && (
+                <div className="col-12 d-lg-none">
+                  <div className="process-arrow-mobile" aria-hidden="true">
+                    ↓
+                  </div>
+                </div>
+              )}
+            </>
+          ))}
           </div>
         </div>
       </div>
@@ -274,7 +374,7 @@ export default function ProductsPage() {
             <div className="separator-line" />
             <div className="contact-buttons mt-4">
               {productContactActions.map((action) => (
-                <a key={action.label} href={action.href} className={`${action.classes} mr-3`}>
+                <a key={action.label} href={action.href} className={action.classes}>
                   <i className={`nc-icon ${action.icon}`} aria-hidden="true" />
                   {action.label}
                 </a>
@@ -284,15 +384,22 @@ export default function ProductsPage() {
         </div>
       </div>
 
-      <ImageModal open={modalState.open} image={modalState.image} title={modalState.title} onClose={handleCloseModal} />
-      <div className="contact-buttons text-center mb-5">
-        {heroActions.map((action) => (
-          <a key={action.label} href={action.href} className={`${action.classes} mr-3`}>
-            <i className={`nc-icon ${action.icon}`} aria-hidden="true" />
-            {action.label}
-          </a>
-        ))}
-      </div>
+      <ImageModal
+        open={modalState.open}
+        image={modalState.image}
+        title={modalState.title}
+        onClose={handleCloseModal}
+        onPrev={
+          modalState.items && modalState.items.length > 1 && modalState.index !== undefined
+            ? () => handleStep(-1)
+            : undefined
+        }
+        onNext={
+          modalState.items && modalState.items.length > 1 && modalState.index !== undefined
+            ? () => handleStep(1)
+            : undefined
+        }
+      />
     </div>
   );
 }

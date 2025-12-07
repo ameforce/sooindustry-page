@@ -3,6 +3,7 @@ export type IconEntry = Readonly<{
   className: string;
 }>;
 
+// 개발 시 확인용 아이콘 목록
 export const iconCatalog: ReadonlyArray<IconEntry> = [
   { name: "Air Balloon", className: "nc-air-baloon" },
   { name: "Album", className: "nc-album-2" },
@@ -105,3 +106,4 @@ export const iconCatalog: ReadonlyArray<IconEntry> = [
   { name: "World", className: "nc-world-2" },
   { name: "Zoom Split", className: "nc-zoom-split" },
 ];
+
