@@ -1,0 +1,649 @@
+// 구분선 스타일
+.separator-line {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, #ff3636, #e74c3c);
+    margin: 20px auto;
+    border-radius: 2px;
+}
+
+.separator-line-light {
+    width: 80px;
+    height: 3px;
+    background: linear-gradient(90deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.4));
+    margin: 20px auto;
+    border-radius: 2px;
+}
+
+// 페이지 헤더 스타일
+.page-header {
+    &.page-header-xs {
+        min-height: 300px;
+        position: relative;
+        background-size: cover;
+        background-position: center;
+        
+        .filter {
+            background: rgba(0, 0, 0, 0.4);
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+        }
+        
+        .content-center {
+            position: relative;
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            
+            .title {
+                color: white;
+                font-size: 3rem;
+                font-weight: 700;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+                margin-bottom: 15px;
+            }
+            
+            .description {
+                color: rgba(255, 255, 255, 0.9);
+                font-size: 1.3rem;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+            }
+        }
+    }
+}
+
+// 섹션 스타일
+.section {
+    padding: 80px 0;
+    
+    &.section-light {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+    
+    &.section-dark {
+        background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        color: white;
+        
+        .title {
+            color: white;
+        }
+        
+        .description {
+            color: rgba(255, 255, 255, 0.8);
+        }
+    }
+}
+
+// 회사 정보 카드
+.company-info-card {
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    
+    &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    .card-header {
+        background: linear-gradient(135deg, #ff3636, #e74c3c);
+        padding: 30px;
+        text-align: center;
+        
+        .company-title {
+            color: white;
+            font-size: 2rem;
+            font-weight: 700;
+            margin: 0;
+            
+            i {
+                margin-right: 15px;
+                font-size: 2.2rem;
+                vertical-align: middle;
+            }
+        }
+    }
+    
+    .card-body {
+        padding: 30px;
+    }
+}
+
+// 연락처 정보 스타일
+.contact-info {
+    .contact-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 15px;
+        background: rgba(255, 54, 54, 0.05);
+        border-radius: 10px;
+        border-left: 4px solid #ff3636;
+        transition: all 0.3s ease;
+        
+        &:hover {
+            background: rgba(255, 54, 54, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .contact-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #ff3636, #e74c3c);
+            border-radius: 50%;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        font-size: 0; // 폰트 베이스라인 영향 제거
+        line-height: 0; // 컨테이너 자체 라인 높이 제거
+            flex-shrink: 0;
+            margin-right: 15px;
+            
+            i {
+                color: white;
+                font-size: 1.5rem;
+            display: block;
+            line-height: 1;
+            margin: 0;
+            &::before {
+                display: block;
+                margin: 0 auto;
+                line-height: 1;
+            }
+            }
+        }
+        
+        .contact-content {
+            flex: 1;
+            
+            strong {
+                display: block;
+                color: #2c3e50;
+                font-weight: 600;
+                font-size: 0.9rem;
+                margin-bottom: 5px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            span {
+                color: #34495e;
+                font-size: 1.1rem;
+                font-weight: 500;
+            }
+        }
+    }
+}
+
+// 빠른 연락 버튼
+.quick-contact-buttons {
+    text-align: center;
+    
+    .btn {
+        margin: 0 10px 10px 10px;
+        padding: 12px 25px;
+        font-weight: 600;
+        
+        i {
+            margin-right: 8px;
+        }
+    }
+}
+
+// 연락처 이미지 래퍼
+.contact-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    border-radius: 15px;
+    
+    .image-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 54, 54, 0.8), rgba(231, 76, 60, 0.6));
+        opacity: 0;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        
+        .overlay-text {
+            text-align: center;
+            
+            i {
+                font-size: 3rem;
+                margin-bottom: 15px;
+                display: block;
+            }
+            
+            p {
+                font-size: 1.2rem;
+                font-weight: 600;
+                margin: 0;
+            }
+        }
+    }
+    
+    &:hover .image-overlay {
+        opacity: 1;
+    }
+}
+
+// 고객사 카드 스타일
+.customer-card {
+    background: white;
+    border-radius: 15px;
+    padding: 30px 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    height: 200px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    
+    &:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+    
+    .customer-icon {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #ff3636, #e74c3c);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        font-size: 0; // 폰트 베이스라인 영향 제거
+        line-height: 0; // 컨테이너 자체 라인 높이 제거
+        flex-shrink: 0;
+        margin: 0 auto 20px auto;
+        
+        i {
+            color: white;
+            font-size: 2rem;
+            display: block;
+            line-height: 1;
+            margin: 0;
+            &::before {
+                display: block;
+                margin: 0 auto;
+                line-height: 1;
+            }
+        }
+    }
+    
+    h5 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+    }
+    
+    p {
+        color: #7f8c8d;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+}
+
+// 문의 방법 스타일
+.contact-method {
+    display: block;
+    text-align: center;
+    padding: 40px 30px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    height: 100%;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+    
+    &:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);
+    }
+    
+    .method-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #ff3636, #e74c3c);
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        text-align: center;
+        font-size: 0; // 폰트 베이스라인 영향 제거
+        line-height: 0; // 컨테이너 자체 라인 높이 제거
+        flex-shrink: 0;
+        margin: 0 auto 25px auto;
+        
+        i {
+            color: white;
+            font-size: 3rem;
+            display: block;
+            line-height: 1;
+            margin: 0;
+            &::before {
+                display: block;
+                margin: 0 auto;
+                line-height: 1;
+            }
+        }
+    }
+    
+    h4 {
+        color: #2c3e50;
+        font-weight: 700;
+        margin-bottom: 20px;
+        font-size: 1.5rem;
+    }
+    
+    p {
+        color: #7f8c8d;
+        margin-bottom: 25px;
+        line-height: 1.6;
+    }
+    
+    .contact-details {
+        strong {
+            color: #ff3636;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+        
+        .contact-detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px 15px;
+            background: rgba(255, 54, 54, 0.05);
+            border-radius: 8px;
+            border-left: 3px solid #ff3636;
+            
+            &:last-child {
+                margin-bottom: 0;
+            }
+            
+            strong {
+                color: #ff3636;
+                font-weight: 600;
+                font-size: 0.9rem;
+                min-width: 60px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            
+            span {
+                color: #2c3e50;
+                font-weight: 500;
+                text-align: right;
+                flex: 1;
+                margin-left: 15px;
+                word-break: break-all;
+                
+                &.address-text {
+                    word-break: keep-all;
+                    line-height: 1.5;
+                    text-align: right;
+                }
+            }
+        }
+    }
+}
+
+// 정보 쇼케이스 스타일 (어두운 섹션용)
+.info-showcase {
+    text-align: center;
+    color: white;
+    
+    img {
+        width: 100%;
+        height: 200px;
+        object-fit: cover;
+        transition: all 0.3s ease;
+        border-radius: 15px;
+        
+        &:hover {
+            transform: scale(1.05);
+        }
+    }
+    
+    h5 {
+        color: white;
+        font-weight: 600;
+        margin-top: 20px;
+        margin-bottom: 10px;
+        font-size: 1.3rem;
+    }
+    
+    p {
+        color: rgba(255, 255, 255, 0.8);
+        margin: 0;
+        font-size: 1rem;
+    }
+}
+
+// 최종 CTA 버튼
+.final-cta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    .btn {
+        margin: 0;
+        padding: 15px 30px;
+        font-size: 1.1rem;
+        font-weight: 600;
+        
+        i {
+            margin-right: 8px;
+        }
+    }
+}
+
+// 반응형 디자인
+@media (max-width: 768px) {
+    .page-header.page-header-xs {
+        min-height: 250px;
+        
+        .content-center {
+            .title {
+                font-size: 2.2rem;
+            }
+            
+            .description {
+                font-size: 1.1rem;
+            }
+        }
+    }
+    
+    .section {
+        padding: 50px 0;
+    }
+    
+    .company-info-card {
+        margin-bottom: 40px;
+        
+        .card-header {
+            padding: 20px;
+            
+            .company-title {
+                font-size: 1.5rem;
+                
+                i {
+                    margin-right: 10px;
+                    font-size: 1.7rem;
+                }
+            }
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+    }
+    
+    .contact-info .contact-item {
+        flex-direction: column;
+        text-align: center;
+        
+        .contact-icon {
+            margin-right: 0;
+            margin-bottom: 15px;
+        }
+    }
+    
+    .quick-contact-buttons .btn {
+        display: block;
+        width: 100%;
+        margin: 10px 0;
+    }
+    
+    .customer-card {
+        height: auto;
+        min-height: 180px;
+        margin-bottom: 20px;
+        
+        .customer-icon {
+            width: 60px;
+            height: 60px;
+            
+            i {
+                font-size: 1.7rem;
+            }
+        }
+        
+        h5 {
+            font-size: 1rem;
+        }
+        
+        p {
+            font-size: 0.85rem;
+        }
+    }
+    
+    .contact-method {
+        padding: 30px 20px;
+        margin-bottom: 30px;
+        
+        .method-icon {
+            width: 80px;
+            height: 80px;
+            
+            i {
+                font-size: 2.5rem;
+            }
+        }
+        
+        h4 {
+            font-size: 1.3rem;
+        }
+    }
+    
+    .info-showcase {
+        margin-bottom: 30px;
+        
+        img {
+            height: 150px;
+        }
+    }
+    
+    .final-cta {
+        flex-direction: column;
+
+        .btn {
+            width: 100%;
+            max-width: 360px;
+            display: block;
+        }
+    }
+}
+
+@media (max-width: 576px) {
+    .page-header.page-header-xs {
+        min-height: 200px;
+        
+        .content-center {
+            .title {
+                font-size: 1.8rem;
+            }
+            
+            .description {
+                font-size: 1rem;
+            }
+        }
+    }
+    
+    .customer-card {
+        height: auto;
+        min-height: 150px;
+        padding: 20px 15px;
+        
+        .customer-icon {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 15px;
+            
+            i {
+                font-size: 1.5rem;
+            }
+        }
+    }
+    
+    .contact-method {
+        padding: 25px 15px;
+        
+        .method-icon {
+            width: 70px;
+            height: 70px;
+            
+            i {
+                font-size: 2rem;
+            }
+        }
+    }
+    
+    .info-showcase img {
+        height: 120px;
+    }
+}
+
+// 애니메이션 효과
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.customer-card, .contact-method, .company-info-card {
+    animation: fadeInUp 0.6s ease-out;
+}
+
+// 호버 효과 개선
+.customer-card:hover .customer-icon {
+    transform: scale(1.1) rotate(5deg);
+}
+
+.contact-method:hover .method-icon {
+    transform: scale(1.05) rotate(-5deg);
+}

@@ -1,143 +1,89 @@
-# SOOIN Industry 웹사이트
+# SOOIN Industry 웹사이트 (Next.js)
 
-SOOIN Industry의 공식 웹사이트 프로젝트입니다. Angular 17과 Bootstrap을 사용하여 구축된 현대적이고 반응형 웹사이트입니다.
+SOOIN Industry의 공식 웹사이트를 Angular에서 **Next.js 16 + React 19** 기반으로 전면 마이그레이션한 프로젝트입니다. 서버 컴포넌트, App Router, Paper Kit SCSS 테마를 활용해 초기 페인트 속도와 메모리 사용량을 크게 줄였습니다.
 
-## 🚀 기능
+## 🚀 핵심 기능
 
-- **홈페이지**: 회사 소개 및 메인 콘텐츠
-- **회사 소개**: 수인산업의 비전과 미션
-- **제품 소개**: 주요 제품 및 서비스 정보
-- **고객 지원**: 문의 및 지원 서비스
+- **홈**: 히어로 섹션, 회사 개요, 주요 사업, CTA
+- **회사 소개**: 연혁·사업 영역 소개
+- **제품 소개**: 진공열처리 설비, 오링·카본·몰리브덴 라인업, 이미지 모달
+- **고객 지원**: 문의 채널, 고객사, 추가 리소스
+- **아이콘 데모**: Paper Kit `nc-icon` 전체 미리보기
 
 ## 🛠 기술 스택
 
-- **Frontend**: Angular 17
-- **UI Framework**: Bootstrap 5, ng-bootstrap
-- **Styling**: SCSS, Paper Kit
-- **개발 도구**: ESLint, Prettier
-- **테스팅**: Jasmine, Karma
-- **빌드**: Angular CLI
+- **Framework**: Next.js 16 (App Router, React Server Components)
+- **UI**: React 19, Tailwind 4, Bootstrap 5, Paper Kit SCSS
+- **언어**: TypeScript 5.5
+- **품질도구**: ESLint 9, Type-checked SCSS(`sass`)
+- **번들 전략**: SWC, 이미지 모달 시 body scroll lock, 데이터 모듈화
 
-## 📋 요구사항
+## 📂 레포 구조
 
-- Node.js 18 이상
-- npm 8 이상
-- Angular CLI 17
+```
+sooindustry-page/
+├── sooindustry-react/        # Next.js 메인 앱
+│   ├── src/app/              # App Router 페이지 및 공용 컴포넌트
+│   ├── src/data/             # 제품/고객지원/아이콘 정적 데이터
+│   ├── src/styles/           # Paper Kit + 컴포넌트 SCSS
+│   └── public/               # Angular 자산 이관(img/css/fonts)
+└── Dockerfile                # Next.js 프로덕션 이미지
+```
 
-## 🏗 설치 및 실행
+## ⚙️ 개발 환경
 
-### 1. 저장소 클론
+| 항목 | 버전 |
+| --- | --- |
+| Node.js | 24.11.1 (LTS) |
+| npm | 10 이상 |
+| OS | macOS/Windows/Linux |
+
+`.nvmrc`를 그대로 사용하면 Next.js 개발 서버와 프로덕션 빌드 모두 동일한 런타임을 공유합니다.
+
+## 🏗 설치 & 실행
+
 ```bash
 git clone https://github.com/your-username/sooindustry-page.git
-cd sooindustry-page/sooindustry-angular
-```
-
-### 2. 의존성 설치
-```bash
+cd sooindustry-page/sooindustry-react
+nvm install 24.11.1
+nvm use
 npm install
+npm run dev   # http://localhost:3000
 ```
-
-### 3. 개발 서버 실행
-```bash
-npm start
-# 또는
-ng serve
-```
-
-애플리케이션이 `http://localhost:4200`에서 실행됩니다.
-
-## 🔧 개발 명령어
-
-```bash
-# 개발 서버 실행
-npm start
-
-# 프로덕션 빌드
-npm run build:prod
-
-# 테스트 실행
-npm test
-
-# 테스트 커버리지 확인
-npm run test:coverage
-
-# 코드 린팅
-npm run lint
-
-# 코드 포맷팅
-npm run format
-
-# 번들 분석
-npm run analyze
-```
-
-## 📁 프로젝트 구조
-
-```
-sooindustry-angular/
-├── src/
-│   ├── app/
-│   │   ├── components/
-│   │   │   ├── home/              # 홈페이지 컴포넌트
-│   │   │   ├── about-us/          # 회사소개 컴포넌트
-│   │   │   ├── products/          # 제품소개 컴포넌트
-│   │   │   └── customer-support/  # 고객지원 컴포넌트
-│   │   ├── shared/
-│   │   │   ├── navbar/            # 네비게이션 바
-│   │   │   └── footer/            # 푸터
-│   │   ├── app-routing.module.ts  # 라우팅 설정
-│   │   └── app.module.ts          # 앱 모듈
-│   ├── assets/                    # 정적 파일
-│   ├── environments/              # 환경 설정
-│   └── styles.scss                # 글로벌 스타일
-├── angular.json                   # Angular 설정
-├── package.json                   # 패키지 설정
-├── .eslintrc.json                 # ESLint 설정
-└── .prettierrc                    # Prettier 설정
-```
-
-## 🧪 테스트
-
-테스트는 Jasmine과 Karma를 사용하여 작성되었습니다.
-
-```bash
-# 단위 테스트 실행
-npm test
-
-# 테스트 커버리지 확인
-npm run test:coverage
-```
-
-## 📝 코딩 표준
-
-- **ESLint**: 코드 품질 및 일관성 유지
-- **Prettier**: 코드 포맷팅 자동화
-- **TypeScript**: 강타입 시스템으로 런타임 에러 방지
-- **Clean Architecture**: SOLID 원칙 적용
-
-## 🚀 배포
 
 ### 프로덕션 빌드
+
 ```bash
-npm run build:prod
+npm run build
+npm run start
 ```
 
-빌드된 파일은 `dist/` 폴더에 생성됩니다.
+## 🧪 품질 도구
 
-## 🤝 기여하기
+```bash
+npm run lint       # ESLint
+npm run build      # 타입/SCSS 검증 포함 빌드
+```
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+> Jest/Playwright는 아직 연결되지 않았습니다. 필요 시 `src/data` 스냅샷 테스트를 추가해 동일 출력 여부를 검증하세요.
 
-## 📄 라이선스
+## 🐳 Docker 배포
 
-이 프로젝트는 MIT 라이선스 하에 배포됩니다. 자세한 내용은 `LICENSE` 파일을 참조하세요.
+루트의 `Dockerfile`은 멀티스테이지로 Next.js를 빌드/런합니다.
 
-## 📞 연락처
+```bash
+docker build -t sooindustry-page .
+docker run --name sooindustry-page -p 14825:14825 sooindustry-page
+```
 
-SOOIN Industry - [contact@sooindustry.com](mailto:contact@sooindustry.com)
+## 🤝 기여 방법
 
-프로젝트 링크: [https://github.com/your-username/sooindustry-page](https://github.com/your-username/sooindustry-page)
+1. Fork & Clone
+2. `feature/your-feature` 브랜치 생성
+3. `sooindustry-react`에서 수정 및 `npm run lint`
+4. PR 생성 (성능 영향/측정 결과 첨부 권장)
+
+## 📄 라이선스 & 문의
+
+- 라이선스: MIT
+- 문의: [contact@sooindustry.com](mailto:contact@sooindustry.com)
