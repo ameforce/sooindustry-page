@@ -1,3 +1,5 @@
+@use "variables" as *;
+
 .img-rounded{
     border-radius: $border-radius-extreme;
     transition: opacity 0.5s ease 0s;

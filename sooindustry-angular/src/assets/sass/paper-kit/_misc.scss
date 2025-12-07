@@ -1,4 +1,8 @@
 /*     General overwrite     */
+@use "variables" as *;
+@use "mixins/vendor-prefixes" as *;
+@use "mixins/navbars" as *;
+
 body{
     color: $font-color;
     font-size: $font-size-base;
