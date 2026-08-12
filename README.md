@@ -61,11 +61,15 @@ npm run start
 ## 🧪 품질 도구
 
 ```bash
-npm run lint       # ESLint
-npm run build      # 타입/SCSS 검증 포함 빌드
+npm run check      # 테스트, ESLint, 타입 검사, 프로덕션 빌드
+npm run smoke:http # 실행 중인 서버의 주요 경로·헤더 HTTP 스모크
 ```
 
-> Jest/Playwright는 아직 연결되지 않았습니다. 필요 시 `src/data` 스냅샷 테스트를 추가해 동일 출력 여부를 검증하세요.
+### 개발·완료 기준
+
+- 저장소의 코드와 CSS 토큰, 실행 결과가 제품의 공식 source of truth입니다.
+- 변경 완료는 `npm run check`가 통과하고, Playwright로 390 / 768 / 1024 / 1440px에서 레이아웃·내비게이션·입력 동작·콘솔 오류를 확인하며, Lighthouse 모바일 품질을 점검했을 때 판정합니다. 실행 경로를 변경했다면 `npm run smoke:http`도 포함합니다.
+- Figma는 개발 단계, 승인, 완료 게이트가 아닙니다. 기존 Figma 산출물은 삭제하지 않고 선택적인 역사 참고자료로만 사용하며, 현재 코드·반응형 브라우저 QA·테스트·빌드와 충돌하면 후자를 따릅니다.
 
 ## 🐳 Docker 배포
 
@@ -80,8 +84,9 @@ docker run --name sooindustry-page -p 14825:14825 sooindustry-page
 
 1. Fork & Clone
 2. `feature/your-feature` 브랜치 생성
-3. `sooindustry-react`에서 수정 및 `npm run lint`
-4. PR 생성 (성능 영향/측정 결과 첨부 권장)
+3. `sooindustry-react`에서 수정 및 `npm run check`
+4. Playwright 390 / 768 / 1024 / 1440px 반응형 QA 및 Lighthouse 모바일 점검
+5. PR 생성 (성능 영향/측정 결과 첨부 권장)
 
 ## 📄 라이선스 & 문의
 
