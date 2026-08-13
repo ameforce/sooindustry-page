@@ -1,2 +1,6 @@
 src_files
+node_modules/
+.next/
+out/
+.wrangler/
 

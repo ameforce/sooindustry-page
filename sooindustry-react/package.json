@@ -6,12 +6,12 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "preview": "node tests/static-server.mjs",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "next typegen && tsc --noEmit",
     "test": "node --test tests/*.test.ts",
     "smoke:http": "node tests/http-smoke.mjs",
-    "check": "npm run test && npm run lint && npm run typecheck && npm run build"
+    "check": "npm run test && npm run lint && npm run typecheck && npm run build && npm run smoke:http"
   },
   "dependencies": {
     "clsx": "^2.1.1",
