@@ -47,12 +47,12 @@ export const equipmentGallery: ReadonlyArray<EquipmentImage> = [
     featured: true,
   },
   {
-    image: "/img/general/misc-4.png",
+    image: "/img/general/misc-4.webp",
     title: "설비 내부",
     description: "챔버 내부 구성",
   },
   {
-    image: "/img/general/misc-5.png",
+    image: "/img/general/misc-5.webp",
     title: "제어 화면",
     description: "설비 운전 인터페이스",
   },
@@ -62,7 +62,7 @@ export const equipmentGallery: ReadonlyArray<EquipmentImage> = [
     description: "제품군 실제 이미지",
   },
   {
-    image: "/img/products/carburizing-2.png",
+    image: "/img/products/carburizing-2.webp",
     title: "열처리 공정 설비",
     description: "공정 설비 실제 이미지",
   },

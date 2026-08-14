@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "./navbar.module.scss";
 
 const navItems = [
@@ -14,6 +14,29 @@ const navItems = [
 
 export function Navbar() {
   const [expanded, setExpanded] = useState(false);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!expanded) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      setExpanded(false);
+      menuButtonRef.current?.focus();
+    };
+    const closeOnDesktop = () => {
+      if (window.innerWidth > 860) setExpanded(false);
+    };
+
+    document.addEventListener("keydown", closeOnEscape);
+    window.addEventListener("resize", closeOnDesktop);
+    document.body.setAttribute("data-menu-open", "true");
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      window.removeEventListener("resize", closeOnDesktop);
+      document.body.removeAttribute("data-menu-open");
+    };
+  }, [expanded]);
 
   return (
     <header className={styles.header}>
@@ -26,6 +49,7 @@ export function Navbar() {
           </span>
         </Link>
         <button
+          ref={menuButtonRef}
           className={styles.menuButton}
           type="button"
           aria-label={expanded ? "메뉴 닫기" : "메뉴 열기"}
@@ -37,13 +61,18 @@ export function Navbar() {
           <span />
           <span />
         </button>
+        <div
+          className={`${styles.backdrop} ${expanded ? styles.backdropOpen : ""}`}
+          aria-hidden="true"
+          onClick={() => setExpanded(false)}
+        />
         <nav
           className={`${styles.navigation} ${expanded ? styles.open : ""}`}
           id="primary-navigation"
           aria-label="주요 메뉴"
         >
           {navItems.map((item) => (
-            <Link key={item.href} href={item.href} onClick={() => setExpanded(false)}>
+            <Link key={item.href} href={item.href} onClick={() => setExpanded(false)} tabIndex={expanded ? 0 : undefined}>
               {item.label}
             </Link>
           ))}

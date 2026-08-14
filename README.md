@@ -33,6 +33,13 @@ npm run build
 npm run preview
 ```
 
+회사 소개서 원본은 `/company-profile/` 정적 페이지이며, 배포용 `public/sooin.pdf`는 Windows의 Chrome 또는 Edge로
+다시 생성할 수 있습니다.
+
+```bash
+npm run profile:pdf
+```
+
 로컬 프리뷰 기본 주소는 `http://127.0.0.1:3000`입니다. 실제 완료 판정에는 390 / 768 / 1024 / 1440px 브라우저 QA도 포함합니다.
 
 ## Cloudflare Pages 배포
