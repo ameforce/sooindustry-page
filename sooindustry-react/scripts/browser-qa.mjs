@@ -77,9 +77,13 @@ async function main() {
       const phoneLink = document.querySelector('a[href="tel:+82325172473"]');
       const mapLinks = [...document.querySelectorAll('a[aria-label*="지도에서 수인산업 위치 보기"], a[aria-label*="카카오맵에서 수인산업 위치 보기"]')];
       const lineCount = (element) => {
+        const semanticPhrases = [...element.children].filter((child) => child.tagName === 'SPAN');
+        if (semanticPhrases.length > 0) {
+          return new Set(semanticPhrases.map((child) => Math.round(child.getBoundingClientRect().top))).size;
+        }
         const range = document.createRange();
         range.selectNodeContents(element);
-        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+        return new Set([...range.getClientRects()].filter((rect) => rect.width > 1).map((rect) => Math.round(rect.top))).size;
       };
       return {
         h1Count: document.querySelectorAll('h1').length,
@@ -113,6 +117,7 @@ async function main() {
           splitTokens,
           heroTitleLines: lineCount(document.querySelector('#hero-title')),
           contactTitleLines: lineCount(document.querySelector('#contact-title')),
+          engineeringScopeLines: lineCount(document.querySelector('[data-engineering-scope]')),
         },
         contactInfo: {
           phoneHref: phoneLink?.getAttribute('href') ?? null,
@@ -147,6 +152,7 @@ async function main() {
       layout.wrapping.splitTokens.length !== 0 ||
       layout.wrapping.heroTitleLines > 2 ||
       layout.wrapping.contactTitleLines > 2 ||
+      layout.wrapping.engineeringScopeLines !== 1 ||
       layout.contactInfo.phoneHref !== "tel:+82325172473" ||
       !layout.contactInfo.phoneText.includes("032-517-2473") ||
       layout.contactInfo.phoneTapHeight < 44 ||
@@ -220,11 +226,19 @@ async function main() {
           clientWidth: rail.clientWidth,
           scrollWidth: rail.scrollWidth,
           scrollSnapType: getComputedStyle(rail).scrollSnapType,
+          nativeScrollbarHidden: getComputedStyle(rail, '::-webkit-scrollbar').display === 'none',
+          rangeVisible: getComputedStyle(document.querySelector('[data-rail-range="' + rail.dataset.mobileRail + '"]')).display !== 'none',
         }));
       })()`);
       if (
         railInteraction.length !== 2 ||
-        railInteraction.some((rail) => rail.scrollWidth <= rail.clientWidth || rail.scrollSnapType === "none")
+        railInteraction.some(
+          (rail) =>
+            rail.scrollWidth <= rail.clientWidth ||
+            rail.scrollSnapType === "none" ||
+            !rail.nativeScrollbarHidden ||
+            !rail.rangeVisible,
+        )
       ) {
         throw new Error(`모바일 수평 레일 구성이 유효하지 않습니다: ${JSON.stringify(railInteraction)}`);
       }
@@ -246,6 +260,36 @@ async function main() {
       }
       railInteraction = railInteraction.map((rail, index) => ({ ...rail, ...movedRails[index] }));
       railInteraction[0].linkDragSuppressed = true;
+
+      const rangeInteraction = await evaluate(cdp, `(() => {
+        return [...document.querySelectorAll('[data-rail-range]')].map((range) => {
+          const railName = range.getAttribute('data-rail-range');
+          const rail = document.querySelector('[data-mobile-rail="' + railName + '"]');
+          range.value = '100';
+          range.dispatchEvent(new Event('input', { bubbles: true }));
+          const result = {
+            name: railName,
+            value: Number(range.value),
+            scrollLeft: Math.round(rail.scrollLeft),
+            maxScroll: Math.round(rail.scrollWidth - rail.clientWidth),
+            output: document.querySelector('[data-rail-count="' + railName + '"]').value,
+          };
+          rail.scrollLeft = 0;
+          return result;
+        });
+      })()`);
+      if (
+        rangeInteraction.length !== 2 ||
+        rangeInteraction.some(
+          (result) =>
+            result.value !== 100 ||
+            Math.abs(result.maxScroll - result.scrollLeft) > 1 ||
+            result.output.split(' / ')[0] !== result.output.split(' / ')[1],
+        )
+      ) {
+        throw new Error(`모바일 레일 진행 바 조작 실패: ${JSON.stringify(rangeInteraction)}`);
+      }
+      railInteraction = railInteraction.map((rail, index) => ({ ...rail, range: rangeInteraction[index] }));
 
       await evaluate(cdp, `(() => {
         const input = document.querySelector('#contact-name');

@@ -15,7 +15,10 @@ export function PrecisionHome() {
       <section className={styles.hero} aria-labelledby="hero-title">
         <div className={styles.heroCopy} data-reveal>
           <p className={styles.eyebrow}>SOOIN INDUSTRY</p>
-          <h1 id="hero-title" data-wrap-check>공정에 맞춘 열처리 산업로</h1>
+          <h1 id="hero-title" data-wrap-check>
+            <span className={styles.phrase}>공정에 맞춘</span>{" "}
+            <span className={styles.phrase}>열처리 산업로</span>
+          </h1>
           <p className={styles.lead} data-wrap-check>
             상담부터 설계, 제작, 설치까지. 수인산업은 실제 제작 설비를 근거로 필요한 열처리 시스템을 함께
             검토합니다.
@@ -56,7 +59,7 @@ export function PrecisionHome() {
       </section>
 
       <aside className={styles.trustBar} aria-label="수인산업 프로젝트 대응 범위" data-reveal>
-        <p>ENGINEERING SCOPE</p>
+        <p data-engineering-scope data-wrap-check><span>ENGINEERING</span> <span>SCOPE</span></p>
         <ul>
           <li>고객 공정 조건 검토</li>
           <li>열처리 설비 설계·제작</li>
@@ -98,6 +101,7 @@ export function PrecisionHome() {
             </article>
           ))}
         </div>
+        <RailNavigator rail="capabilities" count={capabilities.length} label="주요 열처리 설비 탐색 위치" />
       </section>
 
       <section className={styles.equipment} id="equipment" aria-labelledby="equipment-title" data-reveal>
@@ -123,6 +127,7 @@ export function PrecisionHome() {
             </figure>
           ))}
         </div>
+        <RailNavigator rail="equipment" count={equipmentGallery.length} label="실제 설비 사진 탐색 위치" dark />
       </section>
 
       <section className={styles.process} id="process" aria-labelledby="process-title" data-reveal>
@@ -141,7 +146,10 @@ export function PrecisionHome() {
       <section className={styles.contact} id="contact" aria-labelledby="contact-title" data-reveal>
         <div className={styles.contactCopy}>
           <p className={styles.eyebrowLight}>05 · CONTACT</p>
-          <h2 id="contact-title" data-wrap-check>열처리 산업로 제작을 상담해 보세요.</h2>
+          <h2 id="contact-title" data-wrap-check>
+            <span className={styles.phrase}>열처리 산업로 제작을</span>{" "}
+            <span className={styles.phrase}>상담해 보세요.</span>
+          </h2>
           <p data-wrap-check>
             설비 종류와 필요한 작업 범위를 남기면 검토할 내용을 미리 정리할 수 있습니다. 현재 문의 폼은 실제 전송
             연결 전 프리뷰입니다.
@@ -188,6 +196,39 @@ export function PrecisionHome() {
         </div>
         <ContactForm />
       </section>
+    </div>
+  );
+}
+
+function RailNavigator({
+  count,
+  dark = false,
+  label,
+  rail,
+}: Readonly<{
+  count: number;
+  dark?: boolean;
+  label: string;
+  rail: string;
+}>) {
+  return (
+    <div
+      className={`${styles.railNavigator} ${dark ? styles.railNavigatorDark : ""}`}
+      data-rail-controls={rail}
+    >
+      <label htmlFor={`rail-${rail}`}>DRAG / SCROLL</label>
+      <input
+        id={`rail-${rail}`}
+        type="range"
+        min="0"
+        max="100"
+        defaultValue="0"
+        aria-label={label}
+        data-rail-range={rail}
+      />
+      <output htmlFor={`rail-${rail}`} aria-live="polite" data-rail-count={rail}>
+        01 / {String(count).padStart(2, "0")}
+      </output>
     </div>
   );
 }
