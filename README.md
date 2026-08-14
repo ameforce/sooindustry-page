@@ -1,89 +1,68 @@
-# SOOIN Industry 웹사이트 (Next.js)
+# SOOIN Industry 웹사이트
 
-SOOIN Industry의 공식 웹사이트를 Angular에서 **Next.js 16 + React 19** 기반으로 전면 마이그레이션한 프로젝트입니다. 서버 컴포넌트, App Router, Paper Kit SCSS 테마를 활용해 초기 페인트 속도와 메모리 사용량을 크게 줄였습니다.
+수인산업 공식 웹사이트입니다. Next.js 16 App Router를 사용하며, 빌드 결과물은 서버 런타임이 필요 없는 정적 사이트로 Cloudflare Pages에 배포합니다.
 
-## 🚀 핵심 기능
+## 기술 구성
 
-- **홈**: 히어로 섹션, 회사 개요, 주요 사업, CTA
-- **회사 소개**: 연혁·사업 영역 소개
-- **제품 소개**: 진공열처리 설비, 오링·카본·몰리브덴 라인업, 이미지 모달
-- **고객 지원**: 문의 채널, 고객사, 추가 리소스
-- **아이콘 데모**: Paper Kit `nc-icon` 전체 미리보기
+- Next.js 16 + React 19 + TypeScript
+- SCSS, Bootstrap, Paper Kit 자산
+- Next.js static export (`sooindustry-react/out`)
+- Cloudflare Pages 정적 호스팅
+- 운영 도메인: `https://sooindustrykorea.com`
 
-## 🛠 기술 스택
+## 로컬 개발과 검증
 
-- **Framework**: Next.js 16 (App Router, React Server Components)
-- **UI**: React 19, Tailwind 4, Bootstrap 5, Paper Kit SCSS
-- **언어**: TypeScript 5.5
-- **품질도구**: ESLint 9, Type-checked SCSS(`sass`)
-- **번들 전략**: SWC, 이미지 모달 시 body scroll lock, 데이터 모듈화
-
-## 📂 레포 구조
-
-```
-sooindustry-page/
-├── sooindustry-react/        # Next.js 메인 앱
-│   ├── src/app/              # App Router 페이지 및 공용 컴포넌트
-│   ├── src/data/             # 제품/고객지원/아이콘 정적 데이터
-│   ├── src/styles/           # Paper Kit + 컴포넌트 SCSS
-│   └── public/               # Angular 자산 이관(img/css/fonts)
-└── Dockerfile                # Next.js 프로덕션 이미지
-```
-
-## ⚙️ 개발 환경
-
-| 항목 | 버전 |
-| --- | --- |
-| Node.js | 24.11.1 (LTS) |
-| npm | 10 이상 |
-| OS | macOS/Windows/Linux |
-
-`.nvmrc`를 그대로 사용하면 Next.js 개발 서버와 프로덕션 빌드 모두 동일한 런타임을 공유합니다.
-
-## 🏗 설치 & 실행
+Node.js 버전은 루트의 `.nvmrc`를 따릅니다.
 
 ```bash
-git clone https://github.com/your-username/sooindustry-page.git
-cd sooindustry-page/sooindustry-react
-nvm install 24.11.1
-nvm use
-npm install
-npm run dev   # http://localhost:3000
+cd sooindustry-react
+npm ci
+npm run dev
 ```
 
-### 프로덕션 빌드
+전체 검증은 테스트, ESLint, 타입 검사, static export 빌드, Pages 동작을 모사한 HTTP 스모크 순으로 실행됩니다.
+
+```bash
+npm run check
+```
+
+빌드된 정적 사이트만 별도로 확인하려면 다음 명령을 사용합니다.
 
 ```bash
 npm run build
-npm run start
+npm run preview
 ```
 
-## 🧪 품질 도구
+로컬 프리뷰 기본 주소는 `http://127.0.0.1:3000`입니다. 실제 완료 판정에는 390 / 768 / 1024 / 1440px 브라우저 QA도 포함합니다.
 
-```bash
-npm run lint       # ESLint
-npm run build      # 타입/SCSS 검증 포함 빌드
+## Cloudflare Pages 배포
+
+Cloudflare Pages의 Git 연동 설정은 다음과 같습니다.
+
+| 항목 | 값 |
+| --- | --- |
+| Root directory | `sooindustry-react` |
+| Build command | `npm run build` |
+| Build output directory | `out` |
+| Production branch | `main` |
+| Node.js | `sooindustry-react/.nvmrc`의 `24.11.1` |
+
+`public/_headers`와 `public/_redirects`는 빌드 때 `out`으로 복사되며 보안 헤더와 기존 경로 리다이렉트를 정의합니다. canonical, Open Graph, `robots.txt`, `sitemap.xml`은 `https://sooindustrykorea.com`을 운영 기준 URL로 사용합니다.
+
+Cloudflare Pages의 `_redirects`는 도메인 간 리다이렉트를 지원하지 않습니다. `www.sooindustrykorea.com`에서 apex로의 정규화는 proxied `www` DNS 레코드와 Cloudflare Bulk Redirects로 구성하고 배포 후 별도로 검증합니다.
+
+기존 Docker/Jenkins 서버 배포 경로는 static Pages 배포와 충돌하지 않도록 제거되었습니다.
+
+## 저장소 구조
+
+```text
+sooindustry-page/
+└── sooindustry-react/
+    ├── public/          # 이미지, PDF, Cloudflare 규칙
+    ├── src/app/         # App Router 페이지와 컴포넌트
+    ├── src/data/        # 정적 콘텐츠 데이터
+    ├── tests/           # 단위 및 정적 HTTP 스모크
+    └── out/             # 생성되는 Cloudflare Pages 배포 산출물
 ```
 
-> Jest/Playwright는 아직 연결되지 않았습니다. 필요 시 `src/data` 스냅샷 테스트를 추가해 동일 출력 여부를 검증하세요.
-
-## 🐳 Docker 배포
-
-루트의 `Dockerfile`은 멀티스테이지로 Next.js를 빌드/런합니다.
-
-```bash
-docker build -t sooindustry-page .
-docker run --name sooindustry-page -p 14825:14825 sooindustry-page
-```
-
-## 🤝 기여 방법
-
-1. Fork & Clone
-2. `feature/your-feature` 브랜치 생성
-3. `sooindustry-react`에서 수정 및 `npm run lint`
-4. PR 생성 (성능 영향/측정 결과 첨부 권장)
-
-## 📄 라이선스 & 문의
-
-- 라이선스: MIT
-- 문의: [contact@sooindustry.com](mailto:contact@sooindustry.com)
+문의 폼은 현재 데이터를 외부로 전송하지 않는 프리뷰입니다.

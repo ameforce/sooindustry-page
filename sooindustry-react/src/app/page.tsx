@@ -1,5 +1,5 @@
-import { redirect } from "next/navigation";
+import { PrecisionHome } from "./_components/precision-home";
 
-export default function IndexPage() {
-  redirect("/home");
+export default function HomePage() {
+  return <PrecisionHome />;
 }

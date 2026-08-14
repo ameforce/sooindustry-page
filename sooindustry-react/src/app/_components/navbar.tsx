@@ -1,98 +1,57 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
-import clsx from "clsx";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { navLinks } from "@/data/navigation";
+import { useState } from "react";
+import styles from "./navbar.module.scss";
+
+const navItems = [
+  { href: "/#company", label: "회사 소개" },
+  { href: "/#capabilities", label: "주요 사업" },
+  { href: "/#equipment", label: "실제 설비" },
+  { href: "/#contact", label: "문의" },
+] as const;
 
 export function Navbar() {
-  const pathname = usePathname();
   const [expanded, setExpanded] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  useEffect(() => {
-    setExpanded(false);
-  }, [pathname]);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const isNowScrolled = window.scrollY > 40;
-      setScrolled((prev) => (prev === isNowScrolled ? prev : isNowScrolled));
-    };
-
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-
-    return () => {
-      window.removeEventListener("scroll", handleScroll);
-    };
-  }, []);
-
-  const visibleLinks = useMemo(
-    () => navLinks.filter((link) => !link.devOnly || process.env.NODE_ENV !== "production"),
-    []
-  );
-
-  const activeHrefSet = useMemo(() => {
-    if (!pathname) {
-      return new Set<string>();
-    }
-    const normalized = pathname === "/" ? "/home" : pathname;
-    return new Set([normalized]);
-  }, [pathname]);
 
   return (
-    <nav
-      className={clsx("navbar navbar-expand-lg fixed-top sooin-navbar", {
-        "navbar-transparent": !scrolled,
-        "navbar-solid": scrolled,
-      })}
-    >
-      <div className="container">
-        <div className="navbar-translate">
-          <Link className="navbar-brand d-flex align-items-center gap-2" href="/home">
-            <Image src="/img/sooin-logo.gif" alt="SOOIN Industry" width={40} height={26} />
-            SOOIN Industry
-          </Link>
-          <button
-            type="button"
-            aria-label="Toggle navigation"
-            aria-expanded={expanded}
-            className={clsx("navbar-toggler navbar-burger", { toggled: expanded })}
-            onClick={() => setExpanded((prev) => !prev)}
-          >
-            <span className="navbar-toggler-bar" />
-            <span className="navbar-toggler-bar" />
-            <span className="navbar-toggler-bar" />
-          </button>
-        </div>
-
-        <div
-          className={clsx("sooin-nav-collapse", { "is-open": expanded })}
-          id="navbarToggler"
+    <header className={styles.header}>
+      <div className={styles.inner}>
+        <Link className={styles.brand} href="/">
+          <Image src="/img/sooin-logo.gif" alt="" width={46} height={30} priority unoptimized />
+          <span>
+            <strong>SOOIN</strong>
+            <small>INDUSTRY</small>
+          </span>
+        </Link>
+        <button
+          className={styles.menuButton}
+          type="button"
+          aria-label={expanded ? "메뉴 닫기" : "메뉴 열기"}
+          aria-controls="primary-navigation"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((current) => !current)}
         >
-          <ul className="navbar-nav">
-            {visibleLinks.map((link) => (
-              <li
-                key={link.href}
-                className={clsx("nav-item", {
-                  active:
-                    activeHrefSet.has(link.href) ||
-                    (link.href !== "/home" && pathname?.startsWith(link.href)),
-                })}
-              >
-                <Link className="nav-link d-flex align-items-center gap-2" href={link.href}>
-                  <i className={link.icon} aria-hidden="true" />
-                  {link.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
+          <span />
+          <span />
+          <span />
+        </button>
+        <nav
+          className={`${styles.navigation} ${expanded ? styles.open : ""}`}
+          id="primary-navigation"
+          aria-label="주요 메뉴"
+        >
+          {navItems.map((item) => (
+            <Link key={item.href} href={item.href} onClick={() => setExpanded(false)}>
+              {item.label}
+            </Link>
+          ))}
+          <Link className={styles.cta} href="/#contact" onClick={() => setExpanded(false)}>
+            문의하기 <span aria-hidden="true">↗</span>
+          </Link>
+        </nav>
       </div>
-    </nav>
+    </header>
   );
 }

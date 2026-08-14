@@ -1,55 +1,100 @@
 @use "tailwindcss";
 
-@use "../styles/paper-kit.scss" as *;
-@use "../styles/app/shared/navbar/navbar.component.scss" as *;
-@use "../styles/app/shared/footer/footer.component.scss" as *;
-@use "../styles/app/components/home/home.component.scss" as *;
-@use "../styles/app/components/about-us/about-us.component.scss" as *;
-@use "../styles/app/components/customer-support/customer-support.component.scss" as *;
-@use "../styles/app/components/products/products.component.scss" as *;
-@use "../styles/app/components/icon-demo/icon-demo.component.scss" as *;
-
 :root {
-  --background: #0b1011;
-  --foreground: #171717;
+  --color-white: #ffffff;
+  --color-neutral-50: #f7f8fa;
+  --color-neutral-100: #eef1f5;
+  --color-border: #d8dee6;
+  --color-border-strong: #aeb8c5;
+  --color-text-secondary: #516071;
+  --color-navy-800: #102541;
+  --color-navy-900: #0b1b33;
+  --color-navy-950: #071426;
+  --color-red-500: #d7262e;
+  --color-red-600: #b71f26;
+  --color-red-on-dark: #ff7b80;
+  --header-height: 74px;
+  --font-body: var(--font-noto-sans-kr), var(--font-geist-sans), "Segoe UI", sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-html,
-body {
+html {
   max-width: 100%;
-  overflow-x: hidden;
+  scroll-behavior: smooth;
+  scroll-padding-top: calc(var(--header-height) + 18px);
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), "Pretendard", "Noto Sans KR", sans-serif;
+  min-width: 320px;
   min-height: 100vh;
+  margin: 0;
+  overflow-x: hidden;
+  background: var(--color-white);
+  color: var(--color-navy-900);
+  font-family: var(--font-body);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
 
-.nc-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  vertical-align: middle;
-  line-height: 1;
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
-body.scroll-lock {
-  overflow: hidden;
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+}
+
+::selection {
+  background: rgb(215 38 46 / 18%);
+  color: var(--color-navy-900);
+}
+
+:focus-visible {
+  outline: 3px solid rgb(215 38 46 / 35%);
+  outline-offset: 3px;
+}
+
+.skip-link {
+  position: fixed;
+  z-index: 999;
+  top: 10px;
+  left: 10px;
+  padding: 12px 16px;
+  background: var(--color-navy-900);
+  color: var(--color-white);
+  transform: translateY(-160%);
+
+  &:focus {
+    transform: translateY(0);
+  }
 }
 
 .app-shell {
   min-height: 100vh;
 }
 
-a {
-  text-decoration: none;
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
 }
