@@ -55,6 +55,9 @@ async function main() {
       const navigation = document.querySelector('#primary-navigation');
       const equipmentHero = document.querySelector('[data-equipment-hero]');
       const equipmentHeroRect = equipmentHero.getBoundingClientRect();
+      const sampleInput = document.querySelector('#contact-name');
+      const sampleSelect = document.querySelector('#contact-topic');
+      const sampleTextarea = document.querySelector('#contact-message');
       return {
         h1Count: document.querySelectorAll('h1').length,
         innerWidth,
@@ -74,6 +77,13 @@ async function main() {
         menuDisplay: getComputedStyle(menu).display,
         menuHeight: Math.round(menu.getBoundingClientRect().height),
         navigationVisibility: getComputedStyle(navigation).visibility,
+        selectionPolicy: {
+          body: getComputedStyle(document.body).userSelect,
+          heading: getComputedStyle(document.querySelector('h1')).userSelect,
+          input: getComputedStyle(sampleInput).userSelect,
+          select: getComputedStyle(sampleSelect).userSelect,
+          textarea: getComputedStyle(sampleTextarea).userSelect,
+        },
       };
     })()`);
 
@@ -84,7 +94,12 @@ async function main() {
       layout.missingImageAlt !== 0 ||
       layout.brokenImages !== 0 ||
       layout.unlabelledFormControls !== 0 ||
-      layout.visibleHiddenReveals !== 0
+      layout.visibleHiddenReveals !== 0 ||
+      layout.selectionPolicy.body !== "none" ||
+      layout.selectionPolicy.heading !== "none" ||
+      layout.selectionPolicy.input !== "text" ||
+      layout.selectionPolicy.select !== "text" ||
+      layout.selectionPolicy.textarea !== "text"
     ) {
       throw new Error(`레이아웃 검증 실패 (${width}px): ${JSON.stringify(layout)}`);
     }
@@ -154,16 +169,37 @@ async function main() {
       ) {
         throw new Error(`모바일 수평 레일 구성이 유효하지 않습니다: ${JSON.stringify(railInteraction)}`);
       }
-      await evaluate(cdp, `[...document.querySelectorAll('[data-mobile-rail]')].forEach((rail) => { rail.scrollLeft = 180; })`);
-      await delay(160);
-      const movedRails = await evaluate(
-        cdp,
-        `[...document.querySelectorAll('[data-mobile-rail]')].map((rail) => Math.round(rail.scrollLeft))`,
-      );
-      if (movedRails.some((scrollLeft) => scrollLeft <= 0)) {
-        throw new Error(`모바일 수평 레일 스크롤 실패: ${JSON.stringify(movedRails)}`);
+      const movedRails = [
+        await dragRail(cdp, "capabilities", false),
+        await dragRail(cdp, "equipment", false),
+      ];
+      const linkDrag = await dragRail(cdp, "capabilities", true);
+      if (
+        movedRails.some(
+          (result) => result.scrollLeft <= 0 || result.whilePressed.scrollLeft <= 0 || result.dragging !== null,
+        ) ||
+        linkDrag.whilePressed.scrollLeft <= 0 ||
+        linkDrag.hash !== ""
+      ) {
+        throw new Error(
+          `모바일 수평 레일 포인터 드래그 실패: ${JSON.stringify({ movedRails, linkDrag })}`,
+        );
       }
-      railInteraction = railInteraction.map((rail, index) => ({ ...rail, movedTo: movedRails[index] }));
+      railInteraction = railInteraction.map((rail, index) => ({ ...rail, ...movedRails[index] }));
+      railInteraction[0].linkDragSuppressed = true;
+
+      await evaluate(cdp, `(() => {
+        const input = document.querySelector('#contact-name');
+        input.scrollIntoView({ block: 'center' });
+        input.focus();
+      })()`);
+      await cdp.send("Input.insertText", { text: "선택 가능한 입력" });
+      await delay(80);
+      const inputValue = await evaluate(cdp, `document.querySelector('#contact-name').value`);
+      if (inputValue !== "선택 가능한 입력") {
+        throw new Error(`폼 입력 편집 실패: ${JSON.stringify(inputValue)}`);
+      }
+      railInteraction = railInteraction.map((rail) => ({ ...rail, formInputEditable: true }));
     }
 
     const revealCount = await evaluate(cdp, `document.querySelectorAll('[data-reveal]').length`);
@@ -356,6 +392,81 @@ async function evaluate(cdp, expression, awaitPromise = false) {
   });
   if (result.exceptionDetails) throw new Error(result.exceptionDetails.text);
   return result.result.value;
+}
+
+async function dragRail(cdp, railName, startOnLink) {
+  const geometry = await evaluate(cdp, `(() => {
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    rail.scrollLeft = 0;
+    rail.scrollIntoView({ block: 'center' });
+    history.replaceState(null, '', location.pathname);
+    const target = ${startOnLink ? "rail.querySelector('a')" : "rail"};
+    target.scrollIntoView({ block: 'center', inline: 'nearest' });
+    const rect = target.getBoundingClientRect();
+    const startX = Math.min(innerWidth - 28, Math.max(150, rect.left + rect.width * 0.72));
+    const startY = Math.min(innerHeight - 28, Math.max(28, rect.top + rect.height * 0.5));
+    return { startX, startY, endX: Math.max(28, startX - 240) };
+  })()`);
+  await delay(80);
+
+  await cdp.send("Input.dispatchMouseEvent", {
+    type: "mouseMoved",
+    x: geometry.startX,
+    y: geometry.startY,
+    pointerType: "mouse",
+  });
+  await cdp.send("Input.dispatchMouseEvent", {
+    type: "mousePressed",
+    x: geometry.startX,
+    y: geometry.startY,
+    button: "left",
+    buttons: 1,
+    clickCount: 1,
+    pointerType: "mouse",
+  });
+  const pressed = await evaluate(cdp, `(() => ({
+    railDragging: document.querySelector('[data-mobile-rail="${railName}"]').getAttribute('data-dragging'),
+    hitRail: document.elementFromPoint(${geometry.startX}, ${geometry.startY})?.closest('[data-mobile-rail]')?.getAttribute('data-mobile-rail') ?? null,
+  }))()`);
+  for (let step = 1; step <= 7; step += 1) {
+    const x = geometry.startX + ((geometry.endX - geometry.startX) * step) / 7;
+    await cdp.send("Input.dispatchMouseEvent", {
+      type: "mouseMoved",
+      x,
+      y: geometry.startY,
+      button: "left",
+      buttons: 1,
+      pointerType: "mouse",
+    });
+  }
+  const whilePressed = await evaluate(cdp, `(() => {
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    return {
+      scrollLeft: Math.round(rail.scrollLeft),
+      dragging: rail.getAttribute('data-dragging'),
+    };
+  })()`);
+  await cdp.send("Input.dispatchMouseEvent", {
+    type: "mouseReleased",
+    x: geometry.endX,
+    y: geometry.startY,
+    button: "left",
+    buttons: 0,
+    clickCount: 1,
+    pointerType: "mouse",
+  });
+  await delay(160);
+
+  return evaluate(cdp, `(() => {
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    return {
+      scrollLeft: Math.round(rail.scrollLeft),
+      dragging: rail.getAttribute('data-dragging'),
+      hash: location.hash,
+      pressed: ${JSON.stringify(pressed)},
+      whilePressed: ${JSON.stringify(whilePressed)},
+    };
+  })()`);
 }
 
 function delay(milliseconds) {

@@ -818,6 +818,10 @@
     scroll-snap-type: inline mandatory;
     scrollbar-color: var(--color-border-strong) transparent;
     scrollbar-width: thin;
+
+    &[data-dragging="true"] {
+      scroll-snap-type: none;
+    }
   }
 
   .capabilityCard {
@@ -872,6 +876,21 @@
     scroll-snap-type: inline mandatory;
     scrollbar-color: rgb(255 255 255 / 35%) transparent;
     scrollbar-width: thin;
+
+    &[data-dragging="true"] {
+      scroll-snap-type: none;
+    }
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .cardGrid,
+    .gallery {
+      cursor: grab;
+
+      &[data-dragging="true"] {
+        cursor: grabbing;
+      }
+    }
   }
 
   .figure,

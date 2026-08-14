@@ -36,6 +36,8 @@ body {
   color: var(--color-navy-900);
   font-family: var(--font-body);
   text-rendering: optimizeLegibility;
+  -webkit-user-select: none;
+  user-select: none;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -56,13 +58,23 @@ textarea {
   font: inherit;
 }
 
+input,
+select,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 a {
   color: inherit;
   text-decoration: none;
+  -webkit-user-drag: none;
 }
 
 img {
   max-width: 100%;
+  -webkit-user-drag: none;
 }
 
 ::selection {

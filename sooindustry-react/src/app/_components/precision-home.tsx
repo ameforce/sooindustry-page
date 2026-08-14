@@ -2,12 +2,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { capabilities, equipmentGallery, processSteps } from "@/data/precisionProof";
 import { ContactForm } from "./contact-form";
+import { DragScrollDirector } from "./drag-scroll-director";
 import { MotionDirector } from "./motion-director";
 import styles from "./precision-home.module.scss";
 
 export function PrecisionHome() {
   return (
     <div className={styles.page} id="precision-home">
+      <DragScrollDirector scopeId="precision-home" />
       <MotionDirector scopeId="precision-home" />
       <section className={styles.hero} aria-labelledby="hero-title">
         <div className={styles.heroCopy} data-reveal>
