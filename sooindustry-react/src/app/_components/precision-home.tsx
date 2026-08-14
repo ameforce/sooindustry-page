@@ -3,6 +3,7 @@ import Link from "next/link";
 import { companyContact } from "@/data/companyContact";
 import { capabilities, equipmentGallery, processSteps } from "@/data/precisionProof";
 import { ContactForm } from "./contact-form";
+import { AnchorNavigationDirector } from "./anchor-navigation-director";
 import { DragScrollDirector } from "./drag-scroll-director";
 import { MotionDirector } from "./motion-director";
 import styles from "./precision-home.module.scss";
@@ -12,6 +13,7 @@ export function PrecisionHome() {
     <div className={styles.page} id="precision-home">
       <DragScrollDirector scopeId="precision-home" />
       <MotionDirector scopeId="precision-home" />
+      <AnchorNavigationDirector scopeId="precision-home" />
       <section className={styles.hero} aria-labelledby="hero-title">
         <div className={styles.heroCopy} data-reveal>
           <p className={styles.eyebrow}>SOOIN INDUSTRY</p>
@@ -67,7 +69,7 @@ export function PrecisionHome() {
         </ul>
       </aside>
 
-      <section className={styles.intro} id="company" aria-labelledby="company-title" data-reveal>
+      <section className={styles.intro} id="company" aria-labelledby="company-title" data-reveal data-anchor-target>
         <SectionHeading number="01" label="ABOUT" title="설비를 먼저 보여주는 회사 소개" id="company-title" />
         <div className={styles.introGrid}>
           <p className={styles.introLead}>열처리 산업로 제작, 수인산업에게 맡겨 주세요.</p>
@@ -83,7 +85,7 @@ export function PrecisionHome() {
         </div>
       </section>
 
-      <section className={styles.capabilities} id="capabilities" aria-labelledby="capabilities-title" data-reveal>
+      <section className={styles.capabilities} id="capabilities" aria-labelledby="capabilities-title" data-reveal data-anchor-target>
         <SectionHeading number="02" label="CAPABILITIES" title="주요 열처리 설비" id="capabilities-title" />
         <p className={styles.railHint}>옆으로 밀어 설비를 살펴보세요</p>
         <div className={styles.cardGrid} aria-label="주요 열처리 설비 목록" data-mobile-rail="capabilities">
@@ -104,7 +106,7 @@ export function PrecisionHome() {
         <RailNavigator rail="capabilities" count={capabilities.length} label="주요 열처리 설비 탐색 위치" />
       </section>
 
-      <section className={styles.equipment} id="equipment" aria-labelledby="equipment-title" data-reveal>
+      <section className={styles.equipment} id="equipment" aria-labelledby="equipment-title" data-reveal data-anchor-target>
         <div className={styles.equipmentHeading}>
           <SectionHeading number="03" label="PROOF" title="실제 설비로 확인하세요" id="equipment-title" dark />
           <p>기존 홈페이지에 등록된 수인산업의 실제 설비 사진을 그대로 사용했습니다.</p>
@@ -130,7 +132,7 @@ export function PrecisionHome() {
         <RailNavigator rail="equipment" count={equipmentGallery.length} label="실제 설비 사진 탐색 위치" dark />
       </section>
 
-      <section className={styles.process} id="process" aria-labelledby="process-title" data-reveal>
+      <section className={styles.process} id="process" aria-labelledby="process-title" data-reveal data-anchor-target>
         <SectionHeading number="04" label="PROCESS" title="프로젝트 진행 흐름" id="process-title" />
         <ol className={styles.processList}>
           {processSteps.map((step, index) => (
@@ -143,7 +145,7 @@ export function PrecisionHome() {
         <p className={styles.processNote}>프로젝트 범위와 설비 조건에 따라 필요한 단계와 진행 순서를 안내합니다.</p>
       </section>
 
-      <section className={styles.contact} id="contact" aria-labelledby="contact-title" data-reveal>
+      <section className={styles.contact} id="contact" aria-labelledby="contact-title" data-reveal data-anchor-target>
         <div className={styles.contactCopy}>
           <p className={styles.eyebrowLight}>05 · CONTACT</p>
           <h2 id="contact-title" data-wrap-check>

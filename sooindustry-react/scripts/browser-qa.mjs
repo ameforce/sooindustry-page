@@ -192,7 +192,10 @@ async function main() {
           link.target !== "_blank" ||
           link.rel !== "noopener noreferrer" ||
           link.tapHeight < 44 ||
-          !/^https:\/\/map\.(naver|kakao)\.com\//.test(link.href),
+          ![
+            "https://map.naver.com/p/entry/place/37323307?placePath=%2Fhome",
+            "https://place.map.kakao.com/1523327998",
+          ].includes(link.href),
       )
     ) {
       throw new Error(`레이아웃 검증 실패 (${width}px): ${JSON.stringify(layout)}`);
@@ -246,8 +249,78 @@ async function main() {
       if (closed.expanded !== "false" || !closed.focusReturned) {
         throw new Error(`Escape 메뉴 닫기 실패 (${width}px): ${JSON.stringify(closed)}`);
       }
-      menuInteraction = { opened, closed };
+
+      await evaluate(cdp, `document.querySelector('button[aria-controls="primary-navigation"]').click()`);
+      await delay(220);
+      await evaluate(cdp, `document.querySelector('#primary-navigation a[href="/#equipment"]').click()`);
+      await delay(1_180);
+      const navigation = await evaluate(cdp, `(() => {
+        const menu = document.querySelector('button[aria-controls="primary-navigation"]');
+        const target = document.querySelector('#equipment');
+        return {
+          expanded: menu.getAttribute('aria-expanded'),
+          bodyLocked: document.body.hasAttribute('data-menu-open'),
+          hash: location.hash,
+          targetTop: Math.round(target.getBoundingClientRect().top),
+          arriving: target.getAttribute('data-anchor-arriving'),
+        };
+      })()`);
+      if (
+        navigation.expanded !== "false" ||
+        navigation.bodyLocked ||
+        navigation.hash !== "#equipment" ||
+        navigation.targetTop < 70 ||
+        navigation.targetTop > 110 ||
+        navigation.arriving !== "true"
+      ) {
+        throw new Error(`모바일 메뉴 앵커 이동 실패 (${width}px): ${JSON.stringify(navigation)}`);
+      }
+      menuInteraction = { opened, closed, navigation };
     }
+
+    await evaluate(cdp, `(() => {
+      document.documentElement.style.scrollBehavior = 'auto';
+      scrollTo(0, 0);
+      history.replaceState(null, '', location.pathname);
+      document.documentElement.style.scrollBehavior = '';
+      document.querySelector('[data-primary-action]').click();
+    })()`);
+    await delay(120);
+    const anchorInFlight = await evaluate(cdp, `(() => {
+      const page = document.querySelector('#precision-home');
+      const progress = document.querySelector('[class*="anchorProgress"]');
+      return {
+        scrolling: page.getAttribute('data-anchor-scrolling'),
+        progress: Number(progress.style.getPropertyValue('--anchor-progress')),
+        scrollY: Math.round(scrollY),
+      };
+    })()`);
+    await delay(1_100);
+    const anchorSettled = await evaluate(cdp, `(() => {
+      const target = document.querySelector('#contact');
+      return {
+        hash: location.hash,
+        targetTop: Math.round(target.getBoundingClientRect().top),
+        arriving: target.getAttribute('data-anchor-arriving'),
+        scrolling: document.querySelector('#precision-home').hasAttribute('data-anchor-scrolling'),
+      };
+    })()`);
+    if (
+      anchorInFlight.scrolling !== "true" ||
+      anchorInFlight.progress <= 0 ||
+      anchorInFlight.progress >= 1 ||
+      anchorInFlight.scrollY <= 0 ||
+      anchorSettled.hash !== "#contact" ||
+      anchorSettled.targetTop < 70 ||
+      anchorSettled.targetTop > 110 ||
+      anchorSettled.arriving !== "true" ||
+      anchorSettled.scrolling
+    ) {
+      throw new Error(
+        `제작 상담 앵커 모션 실패 (${width}px): ${JSON.stringify({ anchorInFlight, anchorSettled })}`,
+      );
+    }
+    const anchorInteraction = { inFlight: anchorInFlight, settled: anchorSettled };
 
     let railInteraction = null;
     if (width === 390) {
@@ -377,6 +450,7 @@ async function main() {
       width,
       height,
       layout,
+      anchorInteraction,
       menuInteraction,
       railInteraction,
       revealed: revealCount,
@@ -431,12 +505,19 @@ async function main() {
   });
   await navigate(cdp, origin);
   await delay(250);
+  await evaluate(cdp, `document.querySelector('[data-primary-action]').click()`);
+  await delay(80);
   const reducedMotion = await evaluate(cdp, `(() => {
     const page = document.querySelector('#precision-home');
     const hero = document.querySelector('[data-reveal]');
+    const target = document.querySelector('#contact');
     return {
       mediaMatches: matchMedia('(prefers-reduced-motion: reduce)').matches,
       motionReady: page.hasAttribute('data-motion-ready'),
+      anchorScrolling: page.hasAttribute('data-anchor-scrolling'),
+      anchorArriving: target.hasAttribute('data-anchor-arriving'),
+      anchorHash: location.hash,
+      anchorTargetTop: Math.round(target.getBoundingClientRect().top),
       opacity: getComputedStyle(hero).opacity,
       transform: getComputedStyle(hero).transform,
       railSnapTypes: [...document.querySelectorAll('[data-mobile-rail]')].map(
@@ -447,6 +528,11 @@ async function main() {
   if (
     !reducedMotion.mediaMatches ||
     reducedMotion.motionReady ||
+    reducedMotion.anchorScrolling ||
+    reducedMotion.anchorArriving ||
+    reducedMotion.anchorHash !== "#contact" ||
+    reducedMotion.anchorTargetTop < 70 ||
+    reducedMotion.anchorTargetTop > 110 ||
     reducedMotion.opacity !== "1" ||
     reducedMotion.transform !== "none" ||
     reducedMotion.railSnapTypes.length !== 2 ||
