@@ -169,8 +169,33 @@
 }
 
 @media (max-width: 620px) {
+  .form {
+    gap: 16px;
+    padding: 20px 16px;
+  }
+
   .fieldGrid {
-    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .field {
+    min-width: 0;
+
+    label {
+      font-size: 0.78rem;
+    }
+
+    input,
+    select {
+      min-height: 46px;
+      padding: 0 10px;
+      font-size: 0.85rem;
+    }
+
+    textarea {
+      min-height: 104px;
+      font-size: 0.88rem;
+    }
   }
 
   .submit,

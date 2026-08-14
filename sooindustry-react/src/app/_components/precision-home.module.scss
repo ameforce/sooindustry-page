@@ -328,6 +328,11 @@
   margin-left: auto;
 }
 
+.railHint,
+.railHintDark {
+  display: none;
+}
+
 .cardGrid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -614,14 +619,27 @@
 @media (max-width: 900px) {
   .hero {
     grid-template-columns: 1fr;
+    min-height: auto;
   }
 
   .heroCopy {
-    padding: 96px 48px 72px;
+    padding: 52px 48px 44px;
+  }
+
+  .lead {
+    margin-top: 24px;
+  }
+
+  .heroActions {
+    margin-top: 28px;
+  }
+
+  .heroIndex {
+    margin-top: 36px;
   }
 
   .heroVisual {
-    min-height: 620px;
+    min-height: 540px;
   }
 
   .equipment {
@@ -658,110 +676,304 @@
   }
 
   .heroCopy {
-    padding-top: 80px;
-    padding-bottom: 56px;
+    padding-top: 32px;
+    padding-bottom: 24px;
 
     h1 {
-      font-size: clamp(2.8rem, 13vw, 4rem);
+      font-size: clamp(2.75rem, 12.3vw, 3.35rem);
+      line-height: 0.96;
     }
   }
 
-  .heroActions,
-  .primaryButton,
-  .secondaryButton {
+  .eyebrow {
+    margin-bottom: 12px;
+    font-size: 0.68rem;
+  }
+
+  .lead {
+    margin-top: 18px;
+    font-size: 0.92rem;
+    line-height: 1.6;
+  }
+
+  .heroActions {
+    margin-top: 22px;
+  }
+
+  .primaryButton {
     width: 100%;
+    min-height: 50px;
+    justify-content: space-between;
+    padding: 0 18px;
+  }
+
+  .heroIndex {
+    margin-top: 24px;
   }
 
   .heroVisual {
-    min-height: 470px;
+    min-height: 300px;
+
+    img {
+      object-position: 58% center;
+    }
   }
 
   .imageLabel {
-    align-items: start;
-    flex-direction: column;
+    right: 20px;
+    bottom: 20px;
+    left: 20px;
+
+    strong {
+      font-size: 0.88rem;
+    }
   }
 
   .trustBar {
+    gap: 10px;
+    padding-top: 16px;
+    padding-bottom: 16px;
     padding-right: 20px;
     padding-left: 20px;
 
     ul {
-      grid-template-columns: 1fr;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     li {
-      padding: 12px 0;
-      border-top: 1px solid var(--color-border);
-      border-left: 0;
+      padding: 4px 8px;
+      border-top: 0;
+      border-left: 1px solid var(--color-border);
+      font-size: 0.7rem;
+      line-height: 1.45;
+      word-break: keep-all;
     }
   }
 
   .sectionHeading {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: 12px;
+    padding-bottom: 18px;
+
+    h2 {
+      font-size: clamp(1.85rem, 8vw, 2.4rem);
+    }
   }
 
   .introGrid {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 18px;
+    padding-top: 28px;
+  }
+
+  .introLead {
+    font-size: 1.35rem;
+  }
+
+  .introBody {
+    gap: 12px;
+
+    p {
+      font-size: 0.9rem;
+      line-height: 1.7;
+    }
+  }
+
+  .intro,
+  .capabilities,
+  .process {
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+
+  .railHint,
+  .railHintDark {
+    display: block;
+    margin: 14px 0 0;
+    color: var(--color-text-secondary);
+    font-size: 0.72rem;
+  }
+
+  .railHint::after,
+  .railHintDark::after {
+    margin-left: 8px;
+    content: "→";
+  }
+
+  .railHintDark {
+    color: rgb(255 255 255 / 55%);
   }
 
   .cardGrid {
-    grid-template-columns: 1fr;
+    display: flex;
+    max-width: none;
+    margin-top: 18px;
+    margin-right: -20px;
+    padding: 0 20px 16px 0;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    border: 0;
+    scroll-padding-inline: 0 20px;
+    scroll-snap-type: inline mandatory;
+    scrollbar-color: var(--color-border-strong) transparent;
+    scrollbar-width: thin;
+  }
+
+  .capabilityCard {
+    flex: 0 0 min(82vw, 320px);
+    padding: 14px 14px 20px;
+    border: 1px solid var(--color-border);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+
+    h3 {
+      margin-top: 18px;
+      font-size: 1.2rem;
+    }
+
+    a {
+      margin-top: 18px;
+    }
   }
 
   .capabilityCard p {
     min-height: auto;
   }
 
-  .gallery {
-    grid-template-columns: 1fr;
+  .cardImage {
+    aspect-ratio: 16 / 10;
   }
 
+  .cardNumber {
+    margin-top: 16px;
+  }
+
+  .equipment {
+    gap: 28px;
+    padding-top: 64px;
+    padding-bottom: 64px;
+  }
+
+  .equipmentHeading > p {
+    margin-top: 20px;
+    font-size: 0.88rem;
+    line-height: 1.65;
+  }
+
+  .gallery {
+    display: flex;
+    margin-right: -20px;
+    padding: 0 20px 16px 0;
+    gap: 12px;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    scroll-padding-inline: 0 20px;
+    scroll-snap-type: inline mandatory;
+    scrollbar-color: rgb(255 255 255 / 35%) transparent;
+    scrollbar-width: thin;
+  }
+
+  .figure,
   .featuredFigure {
-    grid-column: auto;
+    flex: 0 0 min(82vw, 320px);
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+
+    figcaption {
+      display: grid;
+      gap: 4px;
+
+      span {
+        text-align: left;
+      }
+    }
+  }
+
+  .galleryImage,
+  .featuredFigure .galleryImage {
+    aspect-ratio: 4 / 3;
   }
 
   .processList {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    margin-top: 28px;
+
+    li {
+      min-height: 108px;
+      padding: 16px;
+    }
+
+    strong {
+      font-size: 1.15rem;
+    }
   }
 
   .processNote {
+    margin-top: 18px;
+    font-size: 0.88rem;
     text-align: left;
+  }
+
+  .contact {
+    padding-top: 56px;
+    padding-bottom: 56px;
+  }
+
+  .contactCopy {
+    padding: 0 0 28px;
+
+    h2 {
+      font-size: clamp(2rem, 9vw, 2.55rem);
+      line-height: 1.08;
+    }
+
+    > p:not(.eyebrowLight) {
+      margin-top: 18px;
+      font-size: 0.88rem;
+      line-height: 1.65;
+    }
+
+    a {
+      margin-top: 22px;
+    }
   }
 }
 
 @media (max-width: 430px) {
   .heroIndex {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
 
     div {
-      display: flex;
-      align-items: baseline;
-      gap: 16px;
-      padding: 12px 0;
-      border-right: 0;
-      border-bottom: 1px solid var(--color-border);
+      display: block;
+      padding: 10px 8px 0 0;
+      border-right: 1px solid var(--color-border);
+      border-bottom: 0;
 
       &:not(:first-child) {
-        padding-left: 0;
+        padding-left: 10px;
+      }
+
+      &:last-child {
+        border-right: 0;
       }
     }
 
     dd {
-      margin: 0;
+      margin: 4px 0 0;
+      font-size: 0.68rem;
+      line-height: 1.35;
+      word-break: keep-all;
     }
   }
 
   .heroVisual {
-    min-height: 400px;
+    min-height: 300px;
   }
 
   .processList {
-    grid-template-columns: 1fr;
-
     li {
-      min-height: 132px;
+      min-height: 104px;
     }
   }
 }

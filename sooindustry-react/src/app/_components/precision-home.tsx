@@ -22,11 +22,8 @@ export function PrecisionHome() {
             검토합니다.
           </p>
           <div className={styles.heroActions}>
-            <Link className={styles.primaryButton} href="#equipment">
-              실제 설비 보기 <span aria-hidden="true">↗</span>
-            </Link>
-            <Link className={styles.secondaryButton} href="#contact">
-              문의하기
+            <Link className={styles.primaryButton} href="#contact" data-primary-action>
+              제작 상담하기 <span aria-hidden="true">↗</span>
             </Link>
           </div>
           <dl className={styles.heroIndex} aria-label="홈페이지 주요 정보">
@@ -44,7 +41,7 @@ export function PrecisionHome() {
             </div>
           </dl>
         </div>
-        <div className={styles.heroVisual} data-reveal>
+        <div className={styles.heroVisual} data-reveal data-equipment-hero>
           <Image
             src="/img/general/misc-3.webp"
             alt="수인산업 열처리 산업로 실제 설비"
@@ -86,7 +83,8 @@ export function PrecisionHome() {
 
       <section className={styles.capabilities} id="capabilities" aria-labelledby="capabilities-title" data-reveal>
         <SectionHeading number="02" label="CAPABILITIES" title="주요 열처리 설비" id="capabilities-title" />
-        <div className={styles.cardGrid}>
+        <p className={styles.railHint}>옆으로 밀어 설비를 살펴보세요</p>
+        <div className={styles.cardGrid} aria-label="주요 열처리 설비 목록" data-mobile-rail="capabilities">
           {capabilities.map((item) => (
             <article className={styles.capabilityCard} key={item.number} data-reveal>
               <div className={styles.cardImage}>
@@ -107,8 +105,9 @@ export function PrecisionHome() {
         <div className={styles.equipmentHeading}>
           <SectionHeading number="03" label="PROOF" title="실제 설비로 확인하세요" id="equipment-title" dark />
           <p>기존 홈페이지에 등록된 수인산업의 실제 설비 사진을 그대로 사용했습니다.</p>
+          <span className={styles.railHintDark}>옆으로 밀어 현장 사진을 확인하세요</span>
         </div>
-        <div className={styles.gallery}>
+        <div className={styles.gallery} aria-label="실제 설비 사진 목록" data-mobile-rail="equipment">
           {equipmentGallery.map((item) => (
             <figure
               className={item.featured ? styles.featuredFigure : styles.figure}

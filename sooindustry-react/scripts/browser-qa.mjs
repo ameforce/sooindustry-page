@@ -53,13 +53,22 @@ async function main() {
       }).length;
       const menu = document.querySelector('button[aria-controls="primary-navigation"]');
       const navigation = document.querySelector('#primary-navigation');
+      const equipmentHero = document.querySelector('[data-equipment-hero]');
+      const equipmentHeroRect = equipmentHero.getBoundingClientRect();
       return {
         h1Count: document.querySelectorAll('h1').length,
         innerWidth,
+        pageHeight: document.documentElement.scrollHeight,
         scrollWidth: document.documentElement.scrollWidth,
         horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 1,
+        primaryActionCount: document.querySelectorAll('[data-primary-action]').length,
+        equipmentHeroVisible: equipmentHeroRect.top < innerHeight && equipmentHeroRect.bottom > 0,
+        equipmentHeroTop: Math.round(equipmentHeroRect.top),
         missingImageAlt: [...document.images].filter((image) => !image.hasAttribute('alt')).length,
         brokenImages: [...document.images].filter((image) => image.complete && image.naturalWidth === 0).length,
+        unlabelledFormControls: [...document.querySelectorAll('input, select, textarea')].filter(
+          (control) => !control.labels || control.labels.length === 0,
+        ).length,
         resourceBytes: Math.round(performance.getEntriesByType('resource').reduce((total, item) => total + (item.encodedBodySize || 0), 0)),
         visibleHiddenReveals,
         menuDisplay: getComputedStyle(menu).display,
@@ -71,13 +80,21 @@ async function main() {
     if (
       layout.horizontalOverflow ||
       layout.h1Count !== 1 ||
+      layout.primaryActionCount !== 1 ||
       layout.missingImageAlt !== 0 ||
       layout.brokenImages !== 0 ||
+      layout.unlabelledFormControls !== 0 ||
       layout.visibleHiddenReveals !== 0
     ) {
       throw new Error(`레이아웃 검증 실패 (${width}px): ${JSON.stringify(layout)}`);
     }
     if (width <= 768 && layout.menuHeight < 44) throw new Error(`모바일 메뉴 터치 영역이 44px 미만입니다: ${width}px`);
+    if (width === 390 && !layout.equipmentHeroVisible) {
+      throw new Error(`390px 첫 화면에 실제 설비 이미지가 보이지 않습니다: ${JSON.stringify(layout)}`);
+    }
+    if (width === 390 && layout.pageHeight > 6_500) {
+      throw new Error(`390px 페이지 길이가 모바일 목표를 초과합니다: ${layout.pageHeight}px`);
+    }
     if (width > 860 && (layout.menuDisplay !== "none" || layout.navigationVisibility !== "visible")) {
       throw new Error(`데스크톱 내비게이션 검증 실패 (${width}px): ${JSON.stringify(layout)}`);
     }
@@ -120,6 +137,35 @@ async function main() {
       menuInteraction = { opened, closed };
     }
 
+    let railInteraction = null;
+    if (width === 390) {
+      railInteraction = await evaluate(cdp, `(() => {
+        const rails = [...document.querySelectorAll('[data-mobile-rail]')];
+        return rails.map((rail) => ({
+          name: rail.getAttribute('data-mobile-rail'),
+          clientWidth: rail.clientWidth,
+          scrollWidth: rail.scrollWidth,
+          scrollSnapType: getComputedStyle(rail).scrollSnapType,
+        }));
+      })()`);
+      if (
+        railInteraction.length !== 2 ||
+        railInteraction.some((rail) => rail.scrollWidth <= rail.clientWidth || rail.scrollSnapType === "none")
+      ) {
+        throw new Error(`모바일 수평 레일 구성이 유효하지 않습니다: ${JSON.stringify(railInteraction)}`);
+      }
+      await evaluate(cdp, `[...document.querySelectorAll('[data-mobile-rail]')].forEach((rail) => { rail.scrollLeft = 180; })`);
+      await delay(160);
+      const movedRails = await evaluate(
+        cdp,
+        `[...document.querySelectorAll('[data-mobile-rail]')].map((rail) => Math.round(rail.scrollLeft))`,
+      );
+      if (movedRails.some((scrollLeft) => scrollLeft <= 0)) {
+        throw new Error(`모바일 수평 레일 스크롤 실패: ${JSON.stringify(movedRails)}`);
+      }
+      railInteraction = railInteraction.map((rail, index) => ({ ...rail, movedTo: movedRails[index] }));
+    }
+
     const revealCount = await evaluate(cdp, `document.querySelectorAll('[data-reveal]').length`);
     for (let index = 0; index < revealCount; index += 1) {
       await evaluate(cdp, `document.querySelectorAll('[data-reveal]')[${index}].scrollIntoView({ block: 'center' })`);
@@ -140,7 +186,31 @@ async function main() {
     });
     const screenshotPath = resolve(outputDir, `home-${width}.png`);
     await writeFile(screenshotPath, Buffer.from(screenshot.data, "base64"));
-    results.push({ width, height, layout, menuInteraction, revealed: revealCount, screenshotPath });
+    const sectionScreenshots = [];
+    if (width === 390) {
+      for (const sectionId of ["capabilities", "equipment", "contact"]) {
+        await evaluate(cdp, `document.querySelector('#${sectionId}').scrollIntoView({ block: 'start' })`);
+        await delay(120);
+        const sectionCapture = await cdp.send("Page.captureScreenshot", {
+          format: "png",
+          fromSurface: true,
+          captureBeyondViewport: false,
+        });
+        const sectionPath = resolve(outputDir, `home-390-${sectionId}.png`);
+        await writeFile(sectionPath, Buffer.from(sectionCapture.data, "base64"));
+        sectionScreenshots.push({ sectionId, screenshotPath: sectionPath });
+      }
+    }
+    results.push({
+      width,
+      height,
+      layout,
+      menuInteraction,
+      railInteraction,
+      revealed: revealCount,
+      screenshotPath,
+      sectionScreenshots,
+    });
   }
 
   const profileResults = [];

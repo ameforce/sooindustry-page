@@ -91,36 +91,38 @@ export function ContactForm() {
           />
         </Field>
       </div>
-      <Field label="이메일" id="contact-email" error={errors.email} required>
-        <input
-          id="contact-email"
-          name="email"
-          type="email"
-          autoComplete="email"
-          inputMode="email"
-          value={values.email}
-          onChange={(event) => setField("email", event.target.value)}
-          aria-invalid={Boolean(errors.email)}
-          aria-describedby={errors.email ? "contact-email-error" : undefined}
-        />
-      </Field>
-      <Field label="문의 분야" id="contact-topic" error={errors.topic} required>
-        <select
-          id="contact-topic"
-          name="topic"
-          value={values.topic}
-          onChange={(event) => setField("topic", event.target.value)}
-          aria-invalid={Boolean(errors.topic)}
-          aria-describedby={errors.topic ? "contact-topic-error" : undefined}
-        >
-          <option value="">선택해 주세요</option>
-          <option value="vacuum">진공열처리로</option>
-          <option value="nitriding">가스연질화로</option>
-          <option value="electric">전기로 및 대차로</option>
-          <option value="carburizing">침탄열처리로</option>
-          <option value="other">기타 설비</option>
-        </select>
-      </Field>
+      <div className={styles.fieldGrid}>
+        <Field label="이메일" id="contact-email" error={errors.email} required>
+          <input
+            id="contact-email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            inputMode="email"
+            value={values.email}
+            onChange={(event) => setField("email", event.target.value)}
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? "contact-email-error" : undefined}
+          />
+        </Field>
+        <Field label="문의 분야" id="contact-topic" error={errors.topic} required>
+          <select
+            id="contact-topic"
+            name="topic"
+            value={values.topic}
+            onChange={(event) => setField("topic", event.target.value)}
+            aria-invalid={Boolean(errors.topic)}
+            aria-describedby={errors.topic ? "contact-topic-error" : undefined}
+          >
+            <option value="">선택해 주세요</option>
+            <option value="vacuum">진공열처리로</option>
+            <option value="nitriding">가스연질화로</option>
+            <option value="electric">전기로 및 대차로</option>
+            <option value="carburizing">침탄열처리로</option>
+            <option value="other">기타 설비</option>
+          </select>
+        </Field>
+      </div>
       <Field label="문의 내용" id="contact-message" error={errors.message} required>
         <textarea
           id="contact-message"
