@@ -1,3 +1,5 @@
+import { companyContact } from "./companyContact";
+
 export type IconFact = Readonly<{
   icon: string;
   label: string;
@@ -56,8 +58,8 @@ export const quickActions: ReadonlyArray<QuickAction> = [
     icon: "nc-mobile",
     label: "전화 문의",
     classes: "btn btn-danger btn-round",
-    href: "tel:+82325172473",
-    ariaLabel: "032-517-2473로 전화 걸기",
+    href: companyContact.phoneHref,
+    ariaLabel: `${companyContact.phoneDisplay}로 전화 걸기`,
   },
   {
     icon: "nc-email-85",
@@ -88,10 +90,10 @@ export const contactMethods: ReadonlyArray<ContactMethod> = [
     icon: "nc-mobile",
     title: "전화 문의",
     description: "빠른 상담을 원하시면 전화로 연락하세요",
-    href: "tel:+82325172473",
-    ariaLabel: "032-517-2473로 전화 걸기",
+    href: companyContact.phoneHref,
+    ariaLabel: `${companyContact.phoneDisplay}로 전화 걸기`,
     details: [
-      { label: "TEL", value: "032-517-2473" },
+      { label: "TEL", value: companyContact.phoneDisplay },
       { label: "FAX", value: "032-567-2473" },
     ],
   },
@@ -107,13 +109,13 @@ export const contactMethods: ReadonlyArray<ContactMethod> = [
     icon: "nc-pin-3",
     title: "방문 상담",
     description: "직접 방문하여 상담받으실 수 있습니다",
-    href: "https://map.naver.com/p/search/%EC%9D%B8%EC%B2%9C%EA%B4%91%EC%97%AD%EC%8B%9C%20%EC%84%9C%EA%B5%AC%20%EB%A7%88%EC%A4%91%EB%A1%9C142",
+    href: companyContact.naverMapHref,
     ariaLabel: "네이버 지도에서 위치 보기",
     isExternal: true,
     details: [
       {
         label: "주소",
-        value: "인천광역시 서구 마중로142<br>나동 5호 (오류동)",
+        value: `${companyContact.addressLine1}<br>${companyContact.addressLine2}`,
         isHtml: true,
       },
     ],

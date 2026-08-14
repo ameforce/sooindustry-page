@@ -77,6 +77,21 @@ img {
   -webkit-user-drag: none;
 }
 
+:where(h1, h2, h3, h4, h5, h6) {
+  overflow-wrap: break-word;
+  text-wrap: balance;
+  word-break: keep-all;
+}
+
+:where(p, li, dt, dd, figcaption, label, a, button, address) {
+  overflow-wrap: break-word;
+  word-break: keep-all;
+}
+
+:where(p, li, figcaption, address) {
+  text-wrap: pretty;
+}
+
 ::selection {
   background: rgb(215 38 46 / 18%);
   color: var(--color-navy-900);

@@ -58,6 +58,29 @@ async function main() {
       const sampleInput = document.querySelector('#contact-name');
       const sampleSelect = document.querySelector('#contact-topic');
       const sampleTextarea = document.querySelector('#contact-message');
+      const wrapChecks = [...document.querySelectorAll('[data-wrap-check]')];
+      const splitTokens = [];
+      for (const element of wrapChecks) {
+        const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+        let textNode = walker.nextNode();
+        while (textNode) {
+          for (const match of textNode.nodeValue.matchAll(/\S+/g)) {
+            const range = document.createRange();
+            range.setStart(textNode, match.index);
+            range.setEnd(textNode, match.index + match[0].length);
+            const lines = new Set([...range.getClientRects()].map((rect) => Math.round(rect.top)));
+            if (lines.size > 1) splitTokens.push({ token: match[0], lines: [...lines] });
+          }
+          textNode = walker.nextNode();
+        }
+      }
+      const phoneLink = document.querySelector('a[href="tel:+82325172473"]');
+      const mapLinks = [...document.querySelectorAll('a[aria-label*="지도에서 수인산업 위치 보기"], a[aria-label*="카카오맵에서 수인산업 위치 보기"]')];
+      const lineCount = (element) => {
+        const range = document.createRange();
+        range.selectNodeContents(element);
+        return new Set([...range.getClientRects()].map((rect) => Math.round(rect.top))).size;
+      };
       return {
         h1Count: document.querySelectorAll('h1').length,
         innerWidth,
@@ -84,6 +107,25 @@ async function main() {
           select: getComputedStyle(sampleSelect).userSelect,
           textarea: getComputedStyle(sampleTextarea).userSelect,
         },
+        wrapping: {
+          checked: wrapChecks.length,
+          allKeepWords: wrapChecks.every((node) => getComputedStyle(node).wordBreak === 'keep-all'),
+          splitTokens,
+          heroTitleLines: lineCount(document.querySelector('#hero-title')),
+          contactTitleLines: lineCount(document.querySelector('#contact-title')),
+        },
+        contactInfo: {
+          phoneHref: phoneLink?.getAttribute('href') ?? null,
+          phoneText: phoneLink?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+          phoneTapHeight: phoneLink ? Math.round(phoneLink.getBoundingClientRect().height) : 0,
+          address: document.querySelector('address')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+          maps: mapLinks.map((link) => ({
+            href: link.getAttribute('href'),
+            target: link.getAttribute('target'),
+            rel: link.getAttribute('rel'),
+            tapHeight: Math.round(link.getBoundingClientRect().height),
+          })),
+        },
       };
     })()`);
 
@@ -99,7 +141,24 @@ async function main() {
       layout.selectionPolicy.heading !== "none" ||
       layout.selectionPolicy.input !== "text" ||
       layout.selectionPolicy.select !== "text" ||
-      layout.selectionPolicy.textarea !== "text"
+      layout.selectionPolicy.textarea !== "text" ||
+      layout.wrapping.checked < 10 ||
+      !layout.wrapping.allKeepWords ||
+      layout.wrapping.splitTokens.length !== 0 ||
+      layout.wrapping.heroTitleLines > 2 ||
+      layout.wrapping.contactTitleLines > 2 ||
+      layout.contactInfo.phoneHref !== "tel:+82325172473" ||
+      !layout.contactInfo.phoneText.includes("032-517-2473") ||
+      layout.contactInfo.phoneTapHeight < 44 ||
+      !layout.contactInfo.address.includes("인천광역시 서구 마중로 142 나동 5호 (오류동)") ||
+      layout.contactInfo.maps.length !== 2 ||
+      layout.contactInfo.maps.some(
+        (link) =>
+          link.target !== "_blank" ||
+          link.rel !== "noopener noreferrer" ||
+          link.tapHeight < 44 ||
+          !/^https:\/\/map\.(naver|kakao)\.com\//.test(link.href),
+      )
     ) {
       throw new Error(`레이아웃 검증 실패 (${width}px): ${JSON.stringify(layout)}`);
     }
@@ -223,8 +282,9 @@ async function main() {
     const screenshotPath = resolve(outputDir, `home-${width}.png`);
     await writeFile(screenshotPath, Buffer.from(screenshot.data, "base64"));
     const sectionScreenshots = [];
-    if (width === 390) {
-      for (const sectionId of ["capabilities", "equipment", "contact"]) {
+    const sectionIds = width === 390 ? ["capabilities", "equipment", "contact"] : width === 1440 ? ["contact"] : [];
+    if (sectionIds.length > 0) {
+      for (const sectionId of sectionIds) {
         await evaluate(cdp, `document.querySelector('#${sectionId}').scrollIntoView({ block: 'start' })`);
         await delay(120);
         const sectionCapture = await cdp.send("Page.captureScreenshot", {
@@ -232,7 +292,7 @@ async function main() {
           fromSurface: true,
           captureBeyondViewport: false,
         });
-        const sectionPath = resolve(outputDir, `home-390-${sectionId}.png`);
+        const sectionPath = resolve(outputDir, `home-${width}-${sectionId}.png`);
         await writeFile(sectionPath, Buffer.from(sectionCapture.data, "base64"));
         sectionScreenshots.push({ sectionId, screenshotPath: sectionPath });
       }

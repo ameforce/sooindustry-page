@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { companyContact } from "@/data/companyContact";
 import { capabilities, equipmentGallery, processSteps } from "@/data/precisionProof";
 import { ContactForm } from "./contact-form";
 import { DragScrollDirector } from "./drag-scroll-director";
@@ -14,12 +15,8 @@ export function PrecisionHome() {
       <section className={styles.hero} aria-labelledby="hero-title">
         <div className={styles.heroCopy} data-reveal>
           <p className={styles.eyebrow}>SOOIN INDUSTRY</p>
-          <h1 id="hero-title">
-            공정에 맞춘
-            <br />
-            열처리 산업로
-          </h1>
-          <p className={styles.lead}>
+          <h1 id="hero-title" data-wrap-check>공정에 맞춘 열처리 산업로</h1>
+          <p className={styles.lead} data-wrap-check>
             상담부터 설계, 제작, 설치까지. 수인산업은 실제 제작 설비를 근거로 필요한 열처리 시스템을 함께
             검토합니다.
           </p>
@@ -144,12 +141,48 @@ export function PrecisionHome() {
       <section className={styles.contact} id="contact" aria-labelledby="contact-title" data-reveal>
         <div className={styles.contactCopy}>
           <p className={styles.eyebrowLight}>05 · CONTACT</p>
-          <h2 id="contact-title">열처리 산업로 제작을 상담해 보세요.</h2>
-          <p>
+          <h2 id="contact-title" data-wrap-check>열처리 산업로 제작을 상담해 보세요.</h2>
+          <p data-wrap-check>
             설비 종류와 필요한 작업 범위를 남기면 검토할 내용을 미리 정리할 수 있습니다. 현재 문의 폼은 실제 전송
             연결 전 프리뷰입니다.
           </p>
-          <Link href="/sooin.pdf" download>
+          <div className={styles.contactDetails} aria-label="수인산업 연락처와 위치">
+            <a
+              className={styles.phoneLink}
+              href={companyContact.phoneHref}
+              aria-label={`${companyContact.phoneDisplay}로 전화 걸기`}
+              data-wrap-check
+            >
+              <span>전화 문의</span>
+              <strong>{companyContact.phoneDisplay}</strong>
+              <span aria-hidden="true">↗</span>
+            </a>
+            <address className={styles.location}>
+              <span>회사 위치</span>
+              <strong data-wrap-check>
+                {companyContact.addressLine1} {companyContact.addressLine2}
+              </strong>
+              <div className={styles.mapLinks}>
+                <a
+                  href={companyContact.naverMapHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="네이버 지도에서 수인산업 위치 보기"
+                >
+                  네이버 지도 <span aria-hidden="true">↗</span>
+                </a>
+                <a
+                  href={companyContact.kakaoMapHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="카카오맵에서 수인산업 위치 보기"
+                >
+                  카카오맵 <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+            </address>
+          </div>
+          <Link className={styles.profileDownload} href="/sooin.pdf" download>
             회사 소개서 내려받기 <span aria-hidden="true">↓</span>
           </Link>
         </div>
@@ -177,7 +210,7 @@ function SectionHeading({
       <p>
         <span>{number}</span> {label}
       </p>
-      <h2 id={id}>{title}</h2>
+      <h2 id={id} data-wrap-check>{title}</h2>
     </div>
   );
 }
