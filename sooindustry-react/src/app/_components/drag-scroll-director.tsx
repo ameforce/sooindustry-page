@@ -3,6 +3,9 @@
 import { useEffect } from "react";
 
 const DRAG_THRESHOLD = 6;
+const CLICK_SUPPRESSION_DURATION = 320;
+
+type GestureAxis = "pending" | "horizontal" | "vertical";
 
 export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
   useEffect(() => {
@@ -19,10 +22,11 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
         : null;
       const itemCount = rail.children.length;
       let pointerId: number | null = null;
+      let touchId: number | null = null;
       let startX = 0;
       let startY = 0;
       let startScrollLeft = 0;
-      let gestureAxis: "pending" | "horizontal" | "vertical" = "pending";
+      let gestureAxis: GestureAxis = "pending";
       let dragged = false;
       let suppressClick = false;
       let clickResetTimer: number | null = null;
@@ -48,43 +52,69 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
         updateRailNavigator();
       };
 
-      const finishDrag = (event: PointerEvent, preserveClickSuppression: boolean) => {
-        if (pointerId !== event.pointerId) return;
-
-        const capturedPointerId = pointerId;
-        pointerId = null;
-        gestureAxis = "pending";
-        rail.removeAttribute("data-dragging");
-
-        if (rail.hasPointerCapture(capturedPointerId)) {
-          rail.releasePointerCapture(capturedPointerId);
-        }
-
-        if (preserveClickSuppression) {
-          clickResetTimer = window.setTimeout(() => {
-            suppressClick = false;
-            clickResetTimer = null;
-          }, 0);
-        } else {
+      const scheduleClickReset = () => {
+        if (!suppressClick) return;
+        if (clickResetTimer !== null) window.clearTimeout(clickResetTimer);
+        clickResetTimer = window.setTimeout(() => {
           suppressClick = false;
-        }
+          clickResetTimer = null;
+        }, CLICK_SUPPRESSION_DURATION);
       };
 
-      const onPointerDown = (event: PointerEvent) => {
-        if (!event.isPrimary || event.button !== 0) return;
-        if (rail.scrollWidth <= rail.clientWidth) return;
-
-        pointerId = event.pointerId;
-        startX = event.clientX;
-        startY = event.clientY;
+      const startGesture = (x: number, y: number) => {
+        startX = x;
+        startY = y;
         startScrollLeft = rail.scrollLeft;
         gestureAxis = "pending";
         dragged = false;
         suppressClick = false;
         if (clickResetTimer !== null) window.clearTimeout(clickResetTimer);
         clickResetTimer = null;
-        rail.setPointerCapture(event.pointerId);
+      };
+
+      const startHorizontalDrag = (capturedPointerId?: number) => {
+        gestureAxis = "horizontal";
+        dragged = true;
+        suppressClick = true;
         rail.setAttribute("data-dragging", "true");
+        if (capturedPointerId !== undefined && !rail.hasPointerCapture(capturedPointerId)) {
+          rail.setPointerCapture(capturedPointerId);
+        }
+      };
+
+      const stopDragging = (preserveClickSuppression: boolean) => {
+        const wasDragged = dragged;
+        gestureAxis = "pending";
+        dragged = false;
+        rail.removeAttribute("data-dragging");
+
+        if (preserveClickSuppression && wasDragged) scheduleClickReset();
+        else suppressClick = false;
+      };
+
+      const finishPointerDrag = (event: PointerEvent, preserveClickSuppression: boolean) => {
+        if (pointerId !== event.pointerId) return;
+
+        const capturedPointerId = pointerId;
+        pointerId = null;
+        if (rail.hasPointerCapture(capturedPointerId)) rail.releasePointerCapture(capturedPointerId);
+        stopDragging(preserveClickSuppression);
+      };
+
+      const findTouch = (event: TouchEvent) => {
+        if (touchId === null) return null;
+        return Array.from(event.touches).find((touch) => touch.identifier === touchId)
+          ?? Array.from(event.changedTouches).find((touch) => touch.identifier === touchId)
+          ?? null;
+      };
+
+      const onPointerDown = (event: PointerEvent) => {
+        // Touch is handled with a non-passive touchmove listener so WebKit can cancel only horizontal drags.
+        if (event.pointerType === "touch" || !event.isPrimary || event.button !== 0) return;
+        if (rail.scrollWidth <= rail.clientWidth) return;
+
+        pointerId = event.pointerId;
+        startGesture(event.clientX, event.clientY);
       };
 
       const onPointerMove = (event: PointerEvent) => {
@@ -95,24 +125,66 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
 
         if (gestureAxis === "pending") {
           if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < DRAG_THRESHOLD) return;
-          if (event.pointerType === "touch" && Math.abs(deltaY) > Math.abs(deltaX)) {
+          if (Math.abs(deltaY) >= Math.abs(deltaX)) {
             gestureAxis = "vertical";
-            finishDrag(event, false);
+            finishPointerDrag(event, false);
             return;
           }
-          gestureAxis = "horizontal";
+          startHorizontalDrag(event.pointerId);
         }
 
         if (gestureAxis !== "horizontal") return;
 
-        dragged = true;
-        suppressClick = true;
         event.preventDefault();
         rail.scrollLeft = startScrollLeft - deltaX;
       };
 
-      const onPointerUp = (event: PointerEvent) => finishDrag(event, dragged);
-      const onPointerCancel = (event: PointerEvent) => finishDrag(event, false);
+      const onPointerUp = (event: PointerEvent) => finishPointerDrag(event, dragged);
+      const onPointerCancel = (event: PointerEvent) => finishPointerDrag(event, false);
+
+      const onTouchStart = (event: TouchEvent) => {
+        if (touchId !== null || event.touches.length !== 1 || rail.scrollWidth <= rail.clientWidth) return;
+        const touch = event.touches[0];
+        touchId = touch.identifier;
+        startGesture(touch.clientX, touch.clientY);
+      };
+
+      const onTouchMove = (event: TouchEvent) => {
+        const touch = findTouch(event);
+        if (!touch) return;
+
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+
+        if (gestureAxis === "pending") {
+          if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < DRAG_THRESHOLD) return;
+          if (Math.abs(deltaY) >= Math.abs(deltaX)) {
+            // Do not cancel a vertical intent: the page remains normally scrollable.
+            gestureAxis = "vertical";
+            touchId = null;
+            return;
+          }
+          startHorizontalDrag();
+        }
+
+        if (gestureAxis !== "horizontal") return;
+
+        // WebKit applies this only after horizontal intent is clear, avoiding diagonal page wobble.
+        if (event.cancelable) event.preventDefault();
+        rail.scrollLeft = startScrollLeft - deltaX;
+      };
+
+      const finishTouchDrag = (event: TouchEvent, preserveClickSuppression: boolean) => {
+        if (touchId === null) return;
+        const touchEnded = Array.from(event.changedTouches).some((touch) => touch.identifier === touchId);
+        if (!touchEnded) return;
+
+        touchId = null;
+        stopDragging(preserveClickSuppression);
+      };
+
+      const onTouchEnd = (event: TouchEvent) => finishTouchDrag(event, dragged);
+      const onTouchCancel = (event: TouchEvent) => finishTouchDrag(event, false);
       const onClickCapture = (event: MouseEvent) => {
         if (!suppressClick) return;
         event.preventDefault();
@@ -126,6 +198,10 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
       rail.addEventListener("pointermove", onPointerMove);
       rail.addEventListener("pointerup", onPointerUp);
       rail.addEventListener("pointercancel", onPointerCancel);
+      rail.addEventListener("touchstart", onTouchStart, { passive: true });
+      rail.addEventListener("touchmove", onTouchMove, { passive: false });
+      rail.addEventListener("touchend", onTouchEnd);
+      rail.addEventListener("touchcancel", onTouchCancel);
       rail.addEventListener("click", onClickCapture, true);
       rail.addEventListener("scroll", updateRailNavigator, { passive: true });
       range?.addEventListener("input", onRangeInput);
@@ -138,6 +214,10 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
         rail.removeEventListener("pointermove", onPointerMove);
         rail.removeEventListener("pointerup", onPointerUp);
         rail.removeEventListener("pointercancel", onPointerCancel);
+        rail.removeEventListener("touchstart", onTouchStart);
+        rail.removeEventListener("touchmove", onTouchMove);
+        rail.removeEventListener("touchend", onTouchEnd);
+        rail.removeEventListener("touchcancel", onTouchCancel);
         rail.removeEventListener("click", onClickCapture, true);
         rail.removeEventListener("scroll", updateRailNavigator);
         range?.removeEventListener("input", onRangeInput);

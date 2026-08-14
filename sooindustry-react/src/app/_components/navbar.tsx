@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { type MouseEvent as ReactMouseEvent, useEffect, useRef, useState } from "react";
 import styles from "./navbar.module.scss";
 
 const navItems = [
@@ -12,9 +12,53 @@ const navItems = [
   { href: "/#contact", label: "문의" },
 ] as const;
 
+const TOP_SCROLL_DURATION = 720;
+
+function easeOutQuart(progress: number) {
+  return 1 - (1 - progress) ** 4;
+}
+
 export function Navbar() {
   const [expanded, setExpanded] = useState(false);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const topScrollFrameRef = useRef<number | null>(null);
+
+  const handleBrandClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
+    setExpanded(false);
+    const pathname = window.location.pathname.replace(/\/+$/, "") || "/";
+    if (pathname !== "/") return;
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (window.location.hash) {
+      window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+    }
+
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const start = window.scrollY;
+    if (topScrollFrameRef.current !== null) cancelAnimationFrame(topScrollFrameRef.current);
+    if (reducedMotion || start < 2) {
+      window.scrollTo(0, 0);
+      topScrollFrameRef.current = null;
+      return;
+    }
+
+    const startedAt = performance.now();
+    const step = (timestamp: number) => {
+      const progress = Math.min(1, (timestamp - startedAt) / TOP_SCROLL_DURATION);
+      window.scrollTo(0, start * (1 - easeOutQuart(progress)));
+      if (progress < 1) {
+        topScrollFrameRef.current = requestAnimationFrame(step);
+      } else {
+        topScrollFrameRef.current = null;
+      }
+    };
+    topScrollFrameRef.current = requestAnimationFrame(step);
+  };
+
+  useEffect(() => () => {
+    if (topScrollFrameRef.current !== null) cancelAnimationFrame(topScrollFrameRef.current);
+  }, []);
 
   useEffect(() => {
     if (!expanded) return;
@@ -41,7 +85,7 @@ export function Navbar() {
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link className={styles.brand} href="/">
+        <Link className={styles.brand} href="/" onClickCapture={handleBrandClick} data-brand-link>
           <Image src="/img/sooin-logo.gif" alt="" width={46} height={30} priority unoptimized />
           <span>
             <strong>SOOIN</strong>

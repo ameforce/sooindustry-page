@@ -49,6 +49,11 @@ body[data-menu-open="true"] {
   overflow: hidden;
 }
 
+body.scroll-lock {
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
 @media (min-width: 861px) {
   body[data-menu-open="true"] {
     overflow: auto;

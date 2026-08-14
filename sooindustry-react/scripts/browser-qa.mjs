@@ -148,6 +148,13 @@ async function main() {
           select: getComputedStyle(sampleSelect).userSelect,
           textarea: getComputedStyle(sampleTextarea).userSelect,
         },
+        contactForm: {
+          fontSizes: [...document.querySelectorAll('#contact input, #contact select, #contact textarea')].map((control) => ({
+            id: control.id,
+            fontSize: Number.parseFloat(getComputedStyle(control).fontSize),
+          })),
+          viewport: document.querySelector('meta[name="viewport"]')?.getAttribute('content') ?? '',
+        },
         wrapping: {
           checked: wrapChecks.length,
           allKeepWords: wrapChecks.every((node) => getComputedStyle(node).wordBreak === 'keep-all'),
@@ -204,6 +211,8 @@ async function main() {
       layout.selectionPolicy.input !== "text" ||
       layout.selectionPolicy.select !== "text" ||
       layout.selectionPolicy.textarea !== "text" ||
+      (width <= 768 && layout.contactForm.fontSizes.some((control) => control.fontSize < 16)) ||
+      /(?:maximum-scale\s*=|user-scalable\s*=\s*no)/i.test(layout.contactForm.viewport) ||
       layout.wrapping.checked < 10 ||
       !layout.wrapping.allKeepWords ||
       layout.wrapping.splitTokens.length !== 0 ||
@@ -268,6 +277,7 @@ async function main() {
       );
     }
     const backToTopInteraction = { visible: backToTopVisible, settledScrollY: backToTopSettled };
+    const lightboxInteraction = await lightboxCanary(cdp, width, outputDir);
     if (width <= 768 && layout.menuHeight < 44) throw new Error(`모바일 메뉴 터치 영역이 44px 미만입니다: ${width}px`);
     if (width <= 768 && layout.headerBackground !== "rgb(255, 255, 255)") {
       throw new Error(`모바일 헤더가 불투명하지 않습니다 (${width}px): ${layout.headerBackground}`);
@@ -344,6 +354,36 @@ async function main() {
         throw new Error(`모바일 메뉴 앵커 이동 실패 (${width}px): ${JSON.stringify(navigation)}`);
       }
       menuInteraction = { opened, closed, navigation };
+    }
+
+    const logoInteraction = await evaluate(cdp, `(() => {
+      document.documentElement.style.scrollBehavior = 'auto';
+      const contact = document.querySelector('#contact');
+      contact.scrollIntoView({ block: 'start' });
+      history.replaceState(null, '', '#contact');
+      const before = Math.round(scrollY);
+      document.documentElement.style.scrollBehavior = '';
+      document.querySelector('[data-brand-link]').click();
+      return { before, hashAfterClick: location.hash };
+    })()`);
+    await delay(120);
+    logoInteraction.inFlight = await evaluate(cdp, `Math.round(scrollY)`);
+    await delay(1_000);
+    logoInteraction.settled = await evaluate(cdp, `(() => ({
+      hash: location.hash,
+      scrollY: Math.round(scrollY),
+      anchorScrolling: document.querySelector('#precision-home').hasAttribute('data-anchor-scrolling'),
+    }))()`);
+    if (
+      logoInteraction.before <= 0 ||
+      logoInteraction.hashAfterClick !== '' ||
+      logoInteraction.inFlight <= 0 ||
+      logoInteraction.inFlight >= logoInteraction.before ||
+      logoInteraction.settled.hash !== '' ||
+      logoInteraction.settled.scrollY !== 0 ||
+      logoInteraction.settled.anchorScrolling
+    ) {
+      throw new Error(`로고 상단 이동 검증 실패 (${width}px): ${JSON.stringify(logoInteraction)}`);
     }
 
     await evaluate(cdp, `(() => {
@@ -442,12 +482,25 @@ async function main() {
       ];
       if (
         touchedRails.some(
-          (result) => result.scrollLeft <= 0 || Math.abs(result.pageScrollDelta) > 2 || result.dragging !== null,
+          (result) => result.scrollLeft <= 0 || Math.abs(result.pageScrollDelta) > 2 || result.dragging !== null || result.lightboxOpen,
         )
       ) {
         throw new Error(`모바일 수평 레일 터치 축 잠금 실패: ${JSON.stringify(touchedRails)}`);
       }
       railInteraction = railInteraction.map((rail, index) => ({ ...rail, touch: touchedRails[index] }));
+
+      const verticalTouchRails = [
+        await touchVerticalDragRail(cdp, "capabilities"),
+        await touchVerticalDragRail(cdp, "equipment"),
+      ];
+      if (
+        verticalTouchRails.some(
+          (result) => result.pageScrollDelta < 40 || result.scrollLeft !== 0 || result.dragging !== null,
+        )
+      ) {
+        throw new Error(`모바일 수직 레일 스크롤 보존 실패: ${JSON.stringify(verticalTouchRails)}`);
+      }
+      railInteraction = railInteraction.map((rail, index) => ({ ...rail, verticalTouch: verticalTouchRails[index] }));
 
       const rangeInteraction = await evaluate(cdp, `(() => {
         return [...document.querySelectorAll('[data-rail-range]')].map((range) => {
@@ -538,8 +591,10 @@ async function main() {
       height,
       layout,
       backToTopInteraction,
+      lightboxInteraction,
       anchorInteraction,
       menuInteraction,
+      logoInteraction,
       railInteraction,
       revealed: revealCount,
       screenshotPath,
@@ -579,6 +634,19 @@ async function main() {
     await writeFile(screenshotPath, Buffer.from(screenshot.data, "base64"));
     profileResults.push({ width, height, layout, screenshotPath });
   }
+
+  await cdp.send("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+  });
+  await cdp.send("Emulation.setDeviceMetricsOverride", {
+    width: 390,
+    height: 844,
+    deviceScaleFactor: 1,
+    mobile: true,
+    screenWidth: 390,
+    screenHeight: 844,
+  });
+  const hashNavigation = await hashNavigationCanary(cdp, origin);
 
   await cdp.send("Emulation.setEmulatedMedia", {
     features: [{ name: "prefers-reduced-motion", value: "reduce" }],
@@ -629,8 +697,23 @@ async function main() {
     throw new Error(`감소된 모션 검증 실패: ${JSON.stringify(reducedMotion)}`);
   }
 
+  await evaluate(cdp, `(() => {
+    const contact = document.querySelector('#contact');
+    contact.scrollIntoView({ block: 'start' });
+    history.replaceState(null, '', '#contact');
+    document.querySelector('[data-brand-link]').click();
+  })()`);
+  await delay(40);
+  const reducedMotionLogo = await evaluate(cdp, `(() => ({
+    hash: location.hash,
+    scrollY: Math.round(scrollY),
+  }))()`);
+  if (reducedMotionLogo.hash !== '' || reducedMotionLogo.scrollY !== 0) {
+    throw new Error(`감소된 모션 로고 상단 이동 실패: ${JSON.stringify(reducedMotionLogo)}`);
+  }
+
   process.stdout.write(
-    `${JSON.stringify({ browser, origin, reducedMotion, viewports: results, profileViewports: profileResults }, null, 2)}\n`,
+    `${JSON.stringify({ browser, origin, hashNavigation, reducedMotion, reducedMotionLogo, viewports: results, profileViewports: profileResults }, null, 2)}\n`,
   );
   await cdp.send("Browser.close").catch(() => undefined);
   } finally {
@@ -714,6 +797,256 @@ async function evaluate(cdp, expression, awaitPromise = false) {
   return result.result.value;
 }
 
+async function lightboxCanary(cdp, width, outputDir) {
+  await evaluate(cdp, `(() => {
+    const trigger = document.querySelector('[data-equipment-lightbox-trigger]');
+    trigger.scrollIntoView({ block: 'center', inline: 'nearest' });
+    trigger.focus({ preventScroll: true });
+    trigger.click();
+  })()`);
+  await delay(150);
+
+  const opened = await evaluate(cdp, `(() => {
+    const dialog = document.querySelector('[data-equipment-lightbox]');
+    const close = document.querySelector('[data-lightbox-close]');
+    const panel = dialog?.querySelector('[class*="lightboxPanel"]');
+    const image = dialog?.querySelector('img');
+    const panelRect = panel?.getBoundingClientRect();
+    return {
+      open: Boolean(dialog),
+      role: dialog?.getAttribute('role') ?? null,
+      modal: dialog?.getAttribute('aria-modal') ?? null,
+      bodyLocked: document.body.classList.contains('scroll-lock'),
+      bodyOverflow: getComputedStyle(document.body).overflow,
+      closeFocused: document.activeElement === close,
+      title: document.querySelector('#equipment-lightbox-title')?.textContent?.trim() ?? null,
+      caption: document.querySelector('#equipment-lightbox-caption')?.textContent?.replace(/\s+/g, ' ').trim() ?? null,
+      alt: image?.getAttribute('alt') ?? null,
+      imageLoaded: image?.complete && image.naturalWidth > 0,
+      panel: panelRect ? {
+        top: Math.round(panelRect.top),
+        right: Math.round(panelRect.right),
+        bottom: Math.round(panelRect.bottom),
+        left: Math.round(panelRect.left),
+      } : null,
+    };
+  })()`);
+  if (
+    !opened.open ||
+    opened.role !== 'dialog' ||
+    opened.modal !== 'true' ||
+    !opened.bodyLocked ||
+    opened.bodyOverflow !== 'hidden' ||
+    !opened.closeFocused ||
+    !opened.title ||
+    !opened.caption ||
+    !opened.alt ||
+    !opened.imageLoaded ||
+    !opened.panel ||
+    opened.panel.top < 0 ||
+    opened.panel.left < 0 ||
+    opened.panel.right > width ||
+    opened.panel.bottom > (width <= 768 ? 844 : 900)
+  ) {
+    throw new Error(`설비 라이트박스 열기 검증 실패 (${width}px): ${JSON.stringify(opened)}`);
+  }
+
+  const screenshot = await cdp.send("Page.captureScreenshot", {
+    format: "png",
+    fromSurface: true,
+    captureBeyondViewport: false,
+  });
+  const screenshotPath = resolve(outputDir, `lightbox-${width}.png`);
+  await writeFile(screenshotPath, Buffer.from(screenshot.data, "base64"));
+
+  const closeAndRead = async (selector) => {
+    await evaluate(cdp, `document.querySelector('${selector}').click()`);
+    await delay(80);
+    return evaluate(cdp, `(() => ({
+      open: Boolean(document.querySelector('[data-equipment-lightbox]')),
+      bodyLocked: document.body.classList.contains('scroll-lock'),
+      focusRestored: document.activeElement === document.querySelector('[data-equipment-lightbox-trigger]'),
+    }))()`);
+  };
+
+  const closedByButton = await closeAndRead('[data-lightbox-close]');
+  if (closedByButton.open || closedByButton.bodyLocked || !closedByButton.focusRestored) {
+    throw new Error(`라이트박스 닫기 버튼 검증 실패 (${width}px): ${JSON.stringify(closedByButton)}`);
+  }
+
+  await evaluate(cdp, `document.querySelector('[data-equipment-lightbox-trigger]').click()`);
+  await delay(80);
+  const closedByBackdrop = await closeAndRead('[data-lightbox-backdrop]');
+  if (closedByBackdrop.open || closedByBackdrop.bodyLocked || !closedByBackdrop.focusRestored) {
+    throw new Error(`라이트박스 배경 닫기 검증 실패 (${width}px): ${JSON.stringify(closedByBackdrop)}`);
+  }
+
+  await evaluate(cdp, `document.querySelector('[data-equipment-lightbox-trigger]').click()`);
+  await delay(80);
+  await cdp.send("Input.dispatchKeyEvent", {
+    type: "keyDown",
+    key: "Escape",
+    code: "Escape",
+    windowsVirtualKeyCode: 27,
+    nativeVirtualKeyCode: 27,
+  });
+  await cdp.send("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key: "Escape",
+    code: "Escape",
+    windowsVirtualKeyCode: 27,
+    nativeVirtualKeyCode: 27,
+  });
+  await delay(80);
+  const closedByEscape = await evaluate(cdp, `(() => ({
+    open: Boolean(document.querySelector('[data-equipment-lightbox]')),
+    bodyLocked: document.body.classList.contains('scroll-lock'),
+    focusRestored: document.activeElement === document.querySelector('[data-equipment-lightbox-trigger]'),
+  }))()`);
+  if (closedByEscape.open || closedByEscape.bodyLocked || !closedByEscape.focusRestored) {
+    throw new Error(`라이트박스 Escape 검증 실패 (${width}px): ${JSON.stringify(closedByEscape)}`);
+  }
+
+  return { opened, closedByButton, closedByBackdrop, closedByEscape, screenshotPath };
+}
+
+async function hashNavigationCanary(cdp, origin) {
+  await navigate(cdp, `${origin}#contact`);
+  await delay(420);
+  const direct = await evaluate(cdp, `(() => {
+    const target = document.querySelector('#contact');
+    const page = document.querySelector('#precision-home');
+    return {
+      navigationType: performance.getEntriesByType('navigation')[0]?.type ?? null,
+      hash: location.hash,
+      scrollY: Math.round(scrollY),
+      targetTop: Math.round(target.getBoundingClientRect().top),
+      anchorScrolling: page.hasAttribute('data-anchor-scrolling'),
+      anchorArriving: target.hasAttribute('data-anchor-arriving'),
+    };
+  })()`);
+  if (
+    direct.navigationType !== 'navigate' ||
+    direct.hash !== '#contact' ||
+    direct.scrollY <= 0 ||
+    direct.targetTop < 70 ||
+    direct.targetTop > 110 ||
+    direct.anchorScrolling ||
+    direct.anchorArriving
+  ) {
+    throw new Error(`직접 해시 이동 검증 실패: ${JSON.stringify(direct)}`);
+  }
+
+  const reloaded = cdp.waitFor("Page.loadEventFired");
+  await cdp.send("Page.reload", { ignoreCache: true });
+  await reloaded;
+  await evaluate(cdp, `document.fonts.ready.then(() => true)`, true);
+  await delay(300);
+  const reloadInFlight = await evaluate(cdp, `(() => {
+    const target = document.querySelector('#contact');
+    const page = document.querySelector('#precision-home');
+    return {
+      navigationType: performance.getEntriesByType('navigation')[0]?.type ?? null,
+      hash: location.hash,
+      scrollY: Math.round(scrollY),
+      reloadingToTop: page.hasAttribute('data-reload-resetting'),
+      anchorScrolling: page.hasAttribute('data-anchor-scrolling'),
+      anchorArriving: target.hasAttribute('data-anchor-arriving'),
+    };
+  })()`);
+  await delay(1_100);
+  const reloadSettled = await evaluate(cdp, `(() => {
+    const target = document.querySelector('#contact');
+    const page = document.querySelector('#precision-home');
+    return {
+      navigationType: performance.getEntriesByType('navigation')[0]?.type ?? null,
+      hash: location.hash,
+      scrollY: Math.round(scrollY),
+      reloadingToTop: page.hasAttribute('data-reload-resetting'),
+      anchorScrolling: page.hasAttribute('data-anchor-scrolling'),
+      anchorArriving: target.hasAttribute('data-anchor-arriving'),
+    };
+  })()`);
+  if (
+    reloadInFlight.navigationType !== 'reload' ||
+    reloadInFlight.hash !== '' ||
+    reloadInFlight.anchorScrolling ||
+    reloadInFlight.anchorArriving ||
+    reloadSettled.navigationType !== 'reload' ||
+    reloadSettled.hash !== '' ||
+    reloadSettled.scrollY !== 0 ||
+    reloadSettled.reloadingToTop ||
+    reloadSettled.anchorScrolling ||
+    reloadSettled.anchorArriving
+  ) {
+    throw new Error(`재로드 해시 초기화 검증 실패: ${JSON.stringify({ direct, reloadInFlight, reloadSettled })}`);
+  }
+
+  const noHashBeforeReload = await evaluate(cdp, `(() => {
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+    history.replaceState(null, '', location.pathname);
+    scrollTo(0, Math.min(1_400, document.documentElement.scrollHeight - innerHeight));
+    root.style.scrollBehavior = previousScrollBehavior;
+    return { hash: location.hash, scrollY: Math.round(scrollY) };
+  })()`);
+  if (noHashBeforeReload.hash !== '' || noHashBeforeReload.scrollY <= 0) {
+    throw new Error(`무해시 재로드 사전조건 실패: ${JSON.stringify(noHashBeforeReload)}`);
+  }
+
+  const noHashReloaded = cdp.waitFor("Page.loadEventFired");
+  await cdp.send("Page.reload", { ignoreCache: true });
+  await noHashReloaded;
+  await evaluate(cdp, `document.fonts.ready.then(() => true)`, true);
+  await delay(300);
+  const noHashReloadInFlight = await evaluate(cdp, `(() => {
+    const target = document.querySelector('#contact');
+    const page = document.querySelector('#precision-home');
+    return {
+      navigationType: performance.getEntriesByType('navigation')[0]?.type ?? null,
+      hash: location.hash,
+      scrollY: Math.round(scrollY),
+      reloadingToTop: page.hasAttribute('data-reload-resetting'),
+      anchorScrolling: page.hasAttribute('data-anchor-scrolling'),
+      anchorArriving: target.hasAttribute('data-anchor-arriving'),
+    };
+  })()`);
+  await delay(1_100);
+  const noHashReloadSettled = await evaluate(cdp, `(() => {
+    const target = document.querySelector('#contact');
+    const page = document.querySelector('#precision-home');
+    return {
+      navigationType: performance.getEntriesByType('navigation')[0]?.type ?? null,
+      hash: location.hash,
+      scrollY: Math.round(scrollY),
+      reloadingToTop: page.hasAttribute('data-reload-resetting'),
+      anchorScrolling: page.hasAttribute('data-anchor-scrolling'),
+      anchorArriving: target.hasAttribute('data-anchor-arriving'),
+    };
+  })()`);
+  if (
+    noHashReloadInFlight.navigationType !== 'reload' ||
+    noHashReloadInFlight.hash !== '' ||
+    noHashReloadInFlight.scrollY <= 0 ||
+    !noHashReloadInFlight.reloadingToTop ||
+    noHashReloadInFlight.anchorScrolling ||
+    noHashReloadInFlight.anchorArriving ||
+    noHashReloadSettled.navigationType !== 'reload' ||
+    noHashReloadSettled.hash !== '' ||
+    noHashReloadSettled.scrollY !== 0 ||
+    noHashReloadSettled.reloadingToTop ||
+    noHashReloadSettled.anchorScrolling ||
+    noHashReloadSettled.anchorArriving
+  ) {
+    throw new Error(
+      `무해시 재로드 상단 복귀 검증 실패: ${JSON.stringify({ noHashBeforeReload, noHashReloadInFlight, noHashReloadSettled })}`,
+    );
+  }
+
+  return { direct, reloadInFlight, reloadSettled, noHashBeforeReload, noHashReloadInFlight, noHashReloadSettled };
+}
+
 async function dragRail(cdp, railName, startOnLink) {
   const geometry = await evaluate(cdp, `(() => {
     const rail = document.querySelector('[data-mobile-rail="${railName}"]');
@@ -792,8 +1125,12 @@ async function dragRail(cdp, railName, startOnLink) {
 async function touchDragRail(cdp, railName) {
   const geometry = await evaluate(cdp, `(() => {
     const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
     rail.scrollLeft = 0;
     rail.scrollIntoView({ block: 'center' });
+    root.style.scrollBehavior = previousScrollBehavior;
     const rect = rail.getBoundingClientRect();
     const startX = Math.min(innerWidth - 32, rect.right - 34);
     const startY = Math.min(innerHeight - 48, Math.max(48, rect.top + rect.height * 0.52));
@@ -839,6 +1176,72 @@ async function touchDragRail(cdp, railName) {
   return evaluate(cdp, `(() => {
     const rail = document.querySelector('[data-mobile-rail="${railName}"]');
     return {
+      axis: 'horizontal-diagonal',
+      deltaX: ${Math.round(geometry.endX - geometry.startX)},
+      deltaY: ${Math.round(geometry.endY - geometry.startY)},
+      scrollLeft: Math.round(rail.scrollLeft),
+      pageScrollDelta: Math.round(scrollY) - ${geometry.pageScrollY},
+      dragging: rail.getAttribute('data-dragging'),
+      lightboxOpen: Boolean(document.querySelector('[data-equipment-lightbox]')),
+    };
+  })()`);
+}
+
+async function touchVerticalDragRail(cdp, railName) {
+  const geometry = await evaluate(cdp, `(() => {
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+    rail.scrollLeft = 0;
+    rail.scrollIntoView({ block: 'center' });
+    root.style.scrollBehavior = previousScrollBehavior;
+    const rect = rail.getBoundingClientRect();
+    const startX = Math.min(innerWidth - 32, Math.max(32, rect.left + rect.width * 0.52));
+    const startY = Math.min(innerHeight - 72, Math.max(120, rect.top + rect.height * 0.55));
+    return {
+      startX,
+      startY,
+      endX: startX + 12,
+      endY: Math.max(28, startY - 190),
+      pageScrollY: Math.round(scrollY),
+    };
+  })()`);
+  await delay(80);
+
+  const touchPoint = (x, y) => ({
+    x,
+    y,
+    id: 2,
+    radiusX: 5,
+    radiusY: 5,
+    rotationAngle: 0,
+    force: 1,
+  });
+
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [touchPoint(geometry.startX, geometry.startY)],
+  });
+  for (let step = 1; step <= 8; step += 1) {
+    const progress = step / 8;
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [
+        touchPoint(
+          geometry.startX + (geometry.endX - geometry.startX) * progress,
+          geometry.startY + (geometry.endY - geometry.startY) * progress,
+        ),
+      ],
+    });
+  }
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await delay(220);
+
+  return evaluate(cdp, `(() => {
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    return {
+      axis: 'vertical',
       scrollLeft: Math.round(rail.scrollLeft),
       pageScrollDelta: Math.round(scrollY) - ${geometry.pageScrollY},
       dragging: rail.getAttribute('data-dragging'),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
 import styles from "./precision-home.module.scss";
 
 const SCROLL_DURATION_MIN = 560;
@@ -27,10 +27,15 @@ function documentTop(target: HTMLElement) {
   return top;
 }
 
+function isReloadNavigation() {
+  const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+  return navigation?.type === "reload";
+}
+
 export function AnchorNavigationDirector({ scopeId }: Readonly<{ scopeId: string }>) {
   const progressRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const scope = document.getElementById(scopeId);
     const progress = progressRef.current;
     if (!scope || !progress) return;
@@ -59,6 +64,7 @@ export function AnchorNavigationDirector({ scopeId }: Readonly<{ scopeId: string
       window.clearTimeout(progressTimer);
       restoreScrollBehavior();
       scope.removeAttribute("data-anchor-scrolling");
+      scope.removeAttribute("data-reload-resetting");
       progress.style.setProperty("--anchor-progress", "0");
     };
 
@@ -90,7 +96,7 @@ export function AnchorNavigationDirector({ scopeId }: Readonly<{ scopeId: string
       progressTimer = window.setTimeout(clearActiveMotion, reducedMotion.matches ? 0 : 220);
     };
 
-    const scrollToTarget = (target: HTMLElement, moveFocus = false) => {
+    const scrollToTarget = (target: HTMLElement, moveFocus = false, immediate = false) => {
       clearActiveMotion();
       const headerHeight = Number.parseFloat(
         getComputedStyle(document.documentElement).getPropertyValue("--header-height"),
@@ -101,6 +107,15 @@ export function AnchorNavigationDirector({ scopeId }: Readonly<{ scopeId: string
         documentTop(target) - headerHeight - 18,
       );
       const distance = destination - start;
+
+      // Initial direct hash navigation is positioned synchronously to avoid a visible top-to-section replay.
+      if (immediate) {
+        beginControlledScroll();
+        window.scrollTo(0, destination);
+        restoreScrollBehavior();
+        if (moveFocus) focusDestination(target);
+        return;
+      }
 
       if (reducedMotion.matches || Math.abs(distance) < 2) {
         beginControlledScroll();
@@ -128,6 +143,38 @@ export function AnchorNavigationDirector({ scopeId }: Readonly<{ scopeId: string
           return;
         }
         finish(target, moveFocus);
+      };
+
+      animationFrame = requestAnimationFrame(step);
+    };
+
+    const scrollToTopAfterReload = () => {
+      clearActiveMotion();
+      const start = window.scrollY;
+      if (reducedMotion.matches || start < 2) {
+        beginControlledScroll();
+        window.scrollTo(0, 0);
+        restoreScrollBehavior();
+        return;
+      }
+
+      const duration = Math.min(
+        SCROLL_DURATION_MAX,
+        Math.max(SCROLL_DURATION_MIN, 420 + start * 0.1),
+      );
+      const startedAt = performance.now();
+      beginControlledScroll();
+      scope.setAttribute("data-reload-resetting", "true");
+
+      const step = (timestamp: number) => {
+        const elapsed = Math.min(1, (timestamp - startedAt) / duration);
+        window.scrollTo(0, start * (1 - easeInOutQuint(elapsed)));
+        if (elapsed < 1) {
+          animationFrame = requestAnimationFrame(step);
+          return;
+        }
+        restoreScrollBehavior();
+        scope.removeAttribute("data-reload-resetting");
       };
 
       animationFrame = requestAnimationFrame(step);
@@ -177,10 +224,22 @@ export function AnchorNavigationDirector({ scopeId }: Readonly<{ scopeId: string
       if (target) historyFrame = requestAnimationFrame(() => scrollToTarget(target));
     };
 
+    const initialHash = window.location.hash;
+    if (isReloadNavigation()) {
+      if (initialHash) {
+        window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
+      }
+      historyFrame = requestAnimationFrame(scrollToTopAfterReload);
+    } else if (initialHash) {
+      historyFrame = requestAnimationFrame(() => {
+        const target = targetFromHash(initialHash);
+        if (target) scrollToTarget(target, false, true);
+      });
+    }
+
     document.addEventListener("click", handleClick, true);
     window.addEventListener("hashchange", handleHistoryNavigation);
     window.addEventListener("popstate", handleHistoryNavigation);
-    if (window.location.hash) requestAnimationFrame(handleHistoryNavigation);
 
     return () => {
       clearActiveMotion();

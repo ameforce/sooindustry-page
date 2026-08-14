@@ -6,6 +6,7 @@ import { ContactForm } from "./contact-form";
 import { AnchorNavigationDirector } from "./anchor-navigation-director";
 import { BackToTopButton } from "./back-to-top-button";
 import { DragScrollDirector } from "./drag-scroll-director";
+import { EquipmentGallery } from "./equipment-gallery";
 import { MotionDirector } from "./motion-director";
 import styles from "./precision-home.module.scss";
 
@@ -114,23 +115,7 @@ export function PrecisionHome() {
           <p>기존 홈페이지에 등록된 수인산업의 실제 설비 사진을 그대로 사용했습니다.</p>
           <span className={styles.railHintDark}>옆으로 밀어 현장 사진을 확인하세요</span>
         </div>
-        <div className={styles.gallery} aria-label="실제 설비 사진 목록" data-mobile-rail="equipment">
-          {equipmentGallery.map((item) => (
-            <figure
-              className={item.featured ? styles.featuredFigure : styles.figure}
-              key={item.image}
-              data-reveal
-            >
-              <div className={styles.galleryImage}>
-                <Image src={item.image} alt={`${item.title} — ${item.description}`} fill sizes={item.featured ? "(max-width: 900px) 100vw, 58vw" : "(max-width: 900px) 50vw, 21vw"} />
-              </div>
-              <figcaption>
-                <strong>{item.title}</strong>
-                <span>{item.description}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
+        <EquipmentGallery items={equipmentGallery} />
         <RailNavigator rail="equipment" count={equipmentGallery.length} label="실제 설비 사진 탐색 위치" dark />
       </section>
 
