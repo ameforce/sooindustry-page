@@ -69,3 +69,10 @@ export const equipmentGallery: ReadonlyArray<EquipmentImage> = [
 ];
 
 export const processSteps = ["상담", "설계", "제작", "설치"] as const;
+
+export const processDescriptions = [
+  "필요 설비와 공정 조건, 작업 범위를 함께 확인합니다.",
+  "협의한 조건을 바탕으로 설비 구성과 제어 방식을 설계합니다.",
+  "설계 내용을 기준으로 열처리 설비와 제어부를 제작합니다.",
+  "현장 조건에 맞춰 설치·시공하고 사후관리 범위를 안내합니다.",
+] as const;

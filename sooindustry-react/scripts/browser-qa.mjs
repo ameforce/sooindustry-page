@@ -46,6 +46,10 @@ async function main() {
       screenWidth: width,
       screenHeight: height,
     });
+    await cdp.send("Emulation.setTouchEmulationEnabled", {
+      enabled: width <= 768,
+      maxTouchPoints: width <= 768 ? 5 : 1,
+    });
     await navigate(cdp, origin);
     await delay(1_200);
 
@@ -62,6 +66,10 @@ async function main() {
       const sampleSelect = document.querySelector('#contact-topic');
       const sampleTextarea = document.querySelector('#contact-message');
       const header = document.querySelector('header');
+      const backToTop = document.querySelector('[data-back-to-top]');
+      const iconHrefs = [...document.querySelectorAll('link[rel*="icon"]')].map((link) => link.href);
+      const process = document.querySelector('#process');
+      const processAtmosphere = process.querySelector('[class*="processAtmosphere"] span');
       const wrapChecks = [...document.querySelectorAll('[data-wrap-check]')];
       const splitTokens = [];
       for (const element of wrapChecks) {
@@ -113,6 +121,26 @@ async function main() {
           webkitDisplay: getComputedStyle(document.documentElement, '::-webkit-scrollbar').display,
         },
         headerBackground: getComputedStyle(header).backgroundColor,
+        typography: {
+          bodyFamily: getComputedStyle(document.body).fontFamily,
+          bodySynthesis: getComputedStyle(document.body).fontSynthesis,
+          pretendardReady: document.fonts.check('600 16px "Pretendard Variable"'),
+        },
+        favicon: {
+          hrefs: iconHrefs,
+          hasBrandIcon: iconHrefs.some((href) => href.endsWith('/img/sooin-logo.gif')),
+          hasLegacyGenericIcon: iconHrefs.some((href) => href.includes('/favicon.ico')),
+        },
+        backToTop: {
+          hiddenAtTop: backToTop.getAttribute('aria-hidden'),
+          tabIndexAtTop: backToTop.tabIndex,
+        },
+        processVisual: {
+          stepCount: process.querySelectorAll('ol > li').length,
+          descriptionCount: process.querySelectorAll('ol > li p').length,
+          background: getComputedStyle(process).backgroundColor,
+          atmosphereAnimation: getComputedStyle(processAtmosphere).animationName,
+        },
         selectionPolicy: {
           body: getComputedStyle(document.body).userSelect,
           heading: getComputedStyle(document.querySelector('h1')).userSelect,
@@ -182,6 +210,17 @@ async function main() {
       layout.wrapping.heroTitleLines > 2 ||
       layout.wrapping.contactTitleLines > 2 ||
       layout.wrapping.engineeringScopeLines !== 1 ||
+      !layout.typography.bodyFamily.includes("Pretendard Variable") ||
+      layout.typography.bodySynthesis !== "none" ||
+      !layout.typography.pretendardReady ||
+      !layout.favicon.hasBrandIcon ||
+      layout.favicon.hasLegacyGenericIcon ||
+      layout.backToTop.hiddenAtTop !== "true" ||
+      layout.backToTop.tabIndexAtTop !== -1 ||
+      layout.processVisual.stepCount !== 4 ||
+      layout.processVisual.descriptionCount !== 4 ||
+      layout.processVisual.background !== "rgb(7, 20, 38)" ||
+      layout.processVisual.atmosphereAnimation === "none" ||
       layout.contactInfo.phoneHref !== "tel:+82325172473" ||
       !layout.contactInfo.phoneText.includes("032-517-2473") ||
       layout.contactInfo.phoneTapHeight < 44 ||
@@ -200,6 +239,35 @@ async function main() {
     ) {
       throw new Error(`레이아웃 검증 실패 (${width}px): ${JSON.stringify(layout)}`);
     }
+
+    await evaluate(cdp, `scrollTo(0, Math.min(900, document.documentElement.scrollHeight - innerHeight))`);
+    await delay(220);
+    const backToTopVisible = await evaluate(cdp, `(() => {
+      const button = document.querySelector('[data-back-to-top]');
+      return {
+        visible: button.getAttribute('data-visible'),
+        hidden: button.getAttribute('aria-hidden'),
+        tabIndex: button.tabIndex,
+        tapWidth: Math.round(button.getBoundingClientRect().width),
+        tapHeight: Math.round(button.getBoundingClientRect().height),
+      };
+    })()`);
+    await evaluate(cdp, `document.querySelector('[data-back-to-top]').click()`);
+    await delay(1_000);
+    const backToTopSettled = await evaluate(cdp, `Math.round(scrollY)`);
+    if (
+      backToTopVisible.visible !== "true" ||
+      backToTopVisible.hidden !== "false" ||
+      backToTopVisible.tabIndex !== 0 ||
+      backToTopVisible.tapWidth < 44 ||
+      backToTopVisible.tapHeight < 44 ||
+      backToTopSettled !== 0
+    ) {
+      throw new Error(
+        `맨 위로 이동 버튼 검증 실패 (${width}px): ${JSON.stringify({ backToTopVisible, backToTopSettled })}`,
+      );
+    }
+    const backToTopInteraction = { visible: backToTopVisible, settledScrollY: backToTopSettled };
     if (width <= 768 && layout.menuHeight < 44) throw new Error(`모바일 메뉴 터치 영역이 44px 미만입니다: ${width}px`);
     if (width <= 768 && layout.headerBackground !== "rgb(255, 255, 255)") {
       throw new Error(`모바일 헤더가 불투명하지 않습니다 (${width}px): ${layout.headerBackground}`);
@@ -331,6 +399,7 @@ async function main() {
           clientWidth: rail.clientWidth,
           scrollWidth: rail.scrollWidth,
           scrollSnapType: getComputedStyle(rail).scrollSnapType,
+          touchAction: getComputedStyle(rail).touchAction,
           nativeScrollbarHidden: getComputedStyle(rail, '::-webkit-scrollbar').display === 'none',
           rangeVisible: getComputedStyle(document.querySelector('[data-rail-range="' + rail.dataset.mobileRail + '"]')).display !== 'none',
         }));
@@ -341,6 +410,7 @@ async function main() {
           (rail) =>
             rail.scrollWidth <= rail.clientWidth ||
             rail.scrollSnapType === "none" ||
+            !rail.touchAction.includes("pan-y") ||
             !rail.nativeScrollbarHidden ||
             !rail.rangeVisible,
         )
@@ -365,6 +435,19 @@ async function main() {
       }
       railInteraction = railInteraction.map((rail, index) => ({ ...rail, ...movedRails[index] }));
       railInteraction[0].linkDragSuppressed = true;
+
+      const touchedRails = [
+        await touchDragRail(cdp, "capabilities"),
+        await touchDragRail(cdp, "equipment"),
+      ];
+      if (
+        touchedRails.some(
+          (result) => result.scrollLeft <= 0 || Math.abs(result.pageScrollDelta) > 2 || result.dragging !== null,
+        )
+      ) {
+        throw new Error(`모바일 수평 레일 터치 축 잠금 실패: ${JSON.stringify(touchedRails)}`);
+      }
+      railInteraction = railInteraction.map((rail, index) => ({ ...rail, touch: touchedRails[index] }));
 
       const rangeInteraction = await evaluate(cdp, `(() => {
         return [...document.querySelectorAll('[data-rail-range]')].map((range) => {
@@ -431,7 +514,11 @@ async function main() {
     const screenshotPath = resolve(outputDir, `home-${width}.png`);
     await writeFile(screenshotPath, Buffer.from(screenshot.data, "base64"));
     const sectionScreenshots = [];
-    const sectionIds = width === 390 ? ["capabilities", "equipment", "contact"] : width === 1440 ? ["contact"] : [];
+    const sectionIds = width === 390
+      ? ["capabilities", "equipment", "process", "contact"]
+      : width === 1440
+        ? ["process", "contact"]
+        : [];
     if (sectionIds.length > 0) {
       for (const sectionId of sectionIds) {
         await evaluate(cdp, `document.querySelector('#${sectionId}').scrollIntoView({ block: 'start' })`);
@@ -450,6 +537,7 @@ async function main() {
       width,
       height,
       layout,
+      backToTopInteraction,
       anchorInteraction,
       menuInteraction,
       railInteraction,
@@ -697,6 +785,63 @@ async function dragRail(cdp, railName, startOnLink) {
       hash: location.hash,
       pressed: ${JSON.stringify(pressed)},
       whilePressed: ${JSON.stringify(whilePressed)},
+    };
+  })()`);
+}
+
+async function touchDragRail(cdp, railName) {
+  const geometry = await evaluate(cdp, `(() => {
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    rail.scrollLeft = 0;
+    rail.scrollIntoView({ block: 'center' });
+    const rect = rail.getBoundingClientRect();
+    const startX = Math.min(innerWidth - 32, rect.right - 34);
+    const startY = Math.min(innerHeight - 48, Math.max(48, rect.top + rect.height * 0.52));
+    return {
+      startX,
+      startY,
+      endX: Math.max(32, startX - 230),
+      endY: startY + 14,
+      pageScrollY: Math.round(scrollY),
+    };
+  })()`);
+  await delay(80);
+
+  const touchPoint = (x, y) => ({
+    x,
+    y,
+    id: 1,
+    radiusX: 5,
+    radiusY: 5,
+    rotationAngle: 0,
+    force: 1,
+  });
+
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [touchPoint(geometry.startX, geometry.startY)],
+  });
+  for (let step = 1; step <= 8; step += 1) {
+    const progress = step / 8;
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [
+        touchPoint(
+          geometry.startX + (geometry.endX - geometry.startX) * progress,
+          geometry.startY + (geometry.endY - geometry.startY) * progress,
+        ),
+      ],
+    });
+  }
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await delay(220);
+
+  return evaluate(cdp, `(() => {
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    return {
+      scrollLeft: Math.round(rail.scrollLeft),
+      pageScrollDelta: Math.round(scrollY) - ${geometry.pageScrollY},
+      dragging: rail.getAttribute('data-dragging'),
     };
   })()`);
 }

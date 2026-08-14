@@ -1,21 +1,9 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Noto_Sans_KR } from "next/font/google";
 import { getPublicSiteUrl } from "@/lib/site";
 import { Footer } from "./_components/footer";
 import { Navbar } from "./_components/navbar";
+import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.scss";
-
-const geist = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const notoSansKr = Noto_Sans_KR({
-  variable: "--font-noto-sans-kr",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 const siteUrl = getPublicSiteUrl();
 const title = "수인산업 | 열처리 산업로";
@@ -28,6 +16,10 @@ export const metadata: Metadata = {
   keywords: ["수인산업", "열처리 산업로", "진공열처리로", "가스연질화로", "전기로", "침탄열처리로"],
   metadataBase: siteUrl,
   alternates: { canonical: "/" },
+  icons: {
+    icon: [{ url: "/img/sooin-logo.gif", type: "image/gif" }],
+    shortcut: ["/img/sooin-logo.gif"],
+  },
   openGraph: {
     title,
     description,
@@ -46,7 +38,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ko">
-      <body className={`${geist.variable} ${notoSansKr.variable}`}>
+      <body>
         <a className="skip-link" href="#main-content">
           본문으로 건너뛰기
         </a>

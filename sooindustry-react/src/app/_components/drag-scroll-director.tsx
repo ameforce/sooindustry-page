@@ -20,7 +20,9 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
       const itemCount = rail.children.length;
       let pointerId: number | null = null;
       let startX = 0;
+      let startY = 0;
       let startScrollLeft = 0;
+      let gestureAxis: "pending" | "horizontal" | "vertical" = "pending";
       let dragged = false;
       let suppressClick = false;
       let clickResetTimer: number | null = null;
@@ -51,6 +53,7 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
 
         const capturedPointerId = pointerId;
         pointerId = null;
+        gestureAxis = "pending";
         rail.removeAttribute("data-dragging");
 
         if (rail.hasPointerCapture(capturedPointerId)) {
@@ -68,12 +71,14 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
       };
 
       const onPointerDown = (event: PointerEvent) => {
-        if (!event.isPrimary || event.button !== 0 || event.pointerType === "touch") return;
+        if (!event.isPrimary || event.button !== 0) return;
         if (rail.scrollWidth <= rail.clientWidth) return;
 
         pointerId = event.pointerId;
         startX = event.clientX;
+        startY = event.clientY;
         startScrollLeft = rail.scrollLeft;
+        gestureAxis = "pending";
         dragged = false;
         suppressClick = false;
         if (clickResetTimer !== null) window.clearTimeout(clickResetTimer);
@@ -86,7 +91,19 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
         if (pointerId !== event.pointerId) return;
 
         const deltaX = event.clientX - startX;
-        if (!dragged && Math.abs(deltaX) < DRAG_THRESHOLD) return;
+        const deltaY = event.clientY - startY;
+
+        if (gestureAxis === "pending") {
+          if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < DRAG_THRESHOLD) return;
+          if (event.pointerType === "touch" && Math.abs(deltaY) > Math.abs(deltaX)) {
+            gestureAxis = "vertical";
+            finishDrag(event, false);
+            return;
+          }
+          gestureAxis = "horizontal";
+        }
+
+        if (gestureAxis !== "horizontal") return;
 
         dragged = true;
         suppressClick = true;

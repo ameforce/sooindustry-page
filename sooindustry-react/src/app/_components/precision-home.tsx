@@ -1,9 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { companyContact } from "@/data/companyContact";
-import { capabilities, equipmentGallery, processSteps } from "@/data/precisionProof";
+import { capabilities, equipmentGallery, processDescriptions, processSteps } from "@/data/precisionProof";
 import { ContactForm } from "./contact-form";
 import { AnchorNavigationDirector } from "./anchor-navigation-director";
+import { BackToTopButton } from "./back-to-top-button";
 import { DragScrollDirector } from "./drag-scroll-director";
 import { MotionDirector } from "./motion-director";
 import styles from "./precision-home.module.scss";
@@ -14,6 +15,7 @@ export function PrecisionHome() {
       <DragScrollDirector scopeId="precision-home" />
       <MotionDirector scopeId="precision-home" />
       <AnchorNavigationDirector scopeId="precision-home" />
+      <BackToTopButton />
       <section className={styles.hero} aria-labelledby="hero-title">
         <div className={styles.heroCopy} data-reveal>
           <p className={styles.eyebrow}>SOOIN INDUSTRY</p>
@@ -133,16 +135,30 @@ export function PrecisionHome() {
       </section>
 
       <section className={styles.process} id="process" aria-labelledby="process-title" data-reveal data-anchor-target>
-        <SectionHeading number="04" label="PROCESS" title="프로젝트 진행 흐름" id="process-title" />
+        <div className={styles.processAtmosphere} aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className={styles.processIntro}>
+          <SectionHeading number="04" label="PROCESS" title="프로젝트 진행 흐름" id="process-title" dark />
+          <p>
+            고객 공정에서 시작해 현장 설치까지, 한 단계씩 확인하며 설비를 완성합니다.
+          </p>
+        </div>
         <ol className={styles.processList}>
           {processSteps.map((step, index) => (
             <li key={step} data-reveal>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <strong>{step}</strong>
+              <span className={styles.processNumber}>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <strong>{step}</strong>
+                <p>{processDescriptions[index]}</p>
+              </div>
+              <span className={styles.processArrow} aria-hidden="true">→</span>
             </li>
           ))}
         </ol>
-        <p className={styles.processNote}>프로젝트 범위와 설비 조건에 따라 필요한 단계와 진행 순서를 안내합니다.</p>
+        <p className={styles.processNote}>프로젝트 범위와 설비 조건에 따라 필요한 단계와 진행 순서를 조정합니다.</p>
       </section>
 
       <section className={styles.contact} id="contact" aria-labelledby="contact-title" data-reveal data-anchor-target>

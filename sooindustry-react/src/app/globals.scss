@@ -14,7 +14,7 @@
   --color-red-600: #b71f26;
   --color-red-on-dark: #ff7b80;
   --header-height: 74px;
-  --font-body: var(--font-noto-sans-kr), var(--font-geist-sans), "Segoe UI", sans-serif;
+  --font-body: "Pretendard Variable", Pretendard, sans-serif;
 }
 
 * {
@@ -40,10 +40,9 @@ body {
   background: var(--color-white);
   color: var(--color-navy-900);
   font-family: var(--font-body);
-  text-rendering: optimizeLegibility;
+  font-synthesis: none;
   -webkit-user-select: none;
   user-select: none;
-  -webkit-font-smoothing: antialiased;
 }
 
 body[data-menu-open="true"] {

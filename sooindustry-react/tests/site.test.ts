@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import test from "node:test";
 import { companyContact } from "../src/data/companyContact.ts";
 import { getPublicSiteUrl } from "../src/lib/site.ts";
@@ -18,4 +20,13 @@ test("company contact links use the verified phone, address, and map places", ()
     "https://map.naver.com/p/entry/place/37323307?placePath=%2Fhome",
   );
   assert.equal(companyContact.kakaoMapHref, "https://place.map.kakao.com/1523327998");
+});
+
+test("repository policy requires a real-phone HTTPS preview for mobile acceptance", async () => {
+  const instructions = await readFile(resolve(import.meta.dirname, "../../AGENTS.md"), "utf8");
+
+  assert.match(instructions, /real phone/);
+  assert.match(instructions, /Cloudflare Quick Tunnel/);
+  assert.match(instructions, /QR code/);
+  assert.match(instructions, /not sufficient for mobile acceptance/);
 });
