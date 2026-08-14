@@ -1247,6 +1247,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .cardGrid,
+  .gallery {
+    scroll-snap-type: none;
+  }
+
   .cardImage img,
   .capabilityCard,
   .primaryButton,

@@ -115,6 +115,11 @@
 }
 
 @media (max-width: 860px) {
+  .header {
+    background: var(--color-white);
+    backdrop-filter: none;
+  }
+
   .menuButton {
     display: flex;
   }

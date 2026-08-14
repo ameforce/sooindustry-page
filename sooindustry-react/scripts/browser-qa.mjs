@@ -31,6 +31,9 @@ async function main() {
   );
   const cdp = await CdpSession.connect(target.webSocketDebuggerUrl);
   await Promise.all([cdp.send("Page.enable"), cdp.send("Runtime.enable")]);
+  await cdp.send("Emulation.setEmulatedMedia", {
+    features: [{ name: "prefers-reduced-motion", value: "no-preference" }],
+  });
 
   const results = [];
   for (const width of [390, 768, 1024, 1440]) {
@@ -44,12 +47,12 @@ async function main() {
       screenHeight: height,
     });
     await navigate(cdp, origin);
-    await delay(850);
+    await delay(1_200);
 
     const layout = await evaluate(cdp, `(() => {
       const visibleHiddenReveals = [...document.querySelectorAll('[data-reveal]')].filter((node) => {
         const rect = node.getBoundingClientRect();
-        return rect.bottom > 0 && rect.top < innerHeight && getComputedStyle(node).opacity === '0';
+        return rect.bottom > 0 && rect.top < innerHeight * 0.9 && getComputedStyle(node).opacity === '0';
       }).length;
       const menu = document.querySelector('button[aria-controls="primary-navigation"]');
       const navigation = document.querySelector('#primary-navigation');
@@ -58,6 +61,7 @@ async function main() {
       const sampleInput = document.querySelector('#contact-name');
       const sampleSelect = document.querySelector('#contact-topic');
       const sampleTextarea = document.querySelector('#contact-message');
+      const header = document.querySelector('header');
       const wrapChecks = [...document.querySelectorAll('[data-wrap-check]')];
       const splitTokens = [];
       for (const element of wrapChecks) {
@@ -104,6 +108,11 @@ async function main() {
         menuDisplay: getComputedStyle(menu).display,
         menuHeight: Math.round(menu.getBoundingClientRect().height),
         navigationVisibility: getComputedStyle(navigation).visibility,
+        pageScrollbar: {
+          rootWidth: getComputedStyle(document.documentElement).scrollbarWidth,
+          webkitDisplay: getComputedStyle(document.documentElement, '::-webkit-scrollbar').display,
+        },
+        headerBackground: getComputedStyle(header).backgroundColor,
         selectionPolicy: {
           body: getComputedStyle(document.body).userSelect,
           heading: getComputedStyle(document.querySelector('h1')).userSelect,
@@ -134,8 +143,28 @@ async function main() {
       };
     })()`);
 
+    layout.pageScroll = await evaluate(cdp, `(() => {
+      const root = document.documentElement;
+      const previousScrollBehavior = root.style.scrollBehavior;
+      root.style.scrollBehavior = 'auto';
+      scrollTo(0, Math.min(240, root.scrollHeight - innerHeight));
+      const movedTo = Math.round(scrollY);
+      scrollTo(0, 0);
+      root.style.scrollBehavior = previousScrollBehavior;
+      return {
+        scrollable: root.scrollHeight > root.clientHeight,
+        movedTo,
+        resetTo: Math.round(scrollY),
+      };
+    })()`);
+
     if (
       layout.horizontalOverflow ||
+      layout.pageScrollbar.rootWidth !== "none" ||
+      layout.pageScrollbar.webkitDisplay !== "none" ||
+      !layout.pageScroll.scrollable ||
+      layout.pageScroll.movedTo < 100 ||
+      layout.pageScroll.resetTo !== 0 ||
       layout.h1Count !== 1 ||
       layout.primaryActionCount !== 1 ||
       layout.missingImageAlt !== 0 ||
@@ -169,6 +198,9 @@ async function main() {
       throw new Error(`레이아웃 검증 실패 (${width}px): ${JSON.stringify(layout)}`);
     }
     if (width <= 768 && layout.menuHeight < 44) throw new Error(`모바일 메뉴 터치 영역이 44px 미만입니다: ${width}px`);
+    if (width <= 768 && layout.headerBackground !== "rgb(255, 255, 255)") {
+      throw new Error(`모바일 헤더가 불투명하지 않습니다 (${width}px): ${layout.headerBackground}`);
+    }
     if (width === 390 && !layout.equipmentHeroVisible) {
       throw new Error(`390px 첫 화면에 실제 설비 이미지가 보이지 않습니다: ${JSON.stringify(layout)}`);
     }
@@ -407,9 +439,19 @@ async function main() {
       motionReady: page.hasAttribute('data-motion-ready'),
       opacity: getComputedStyle(hero).opacity,
       transform: getComputedStyle(hero).transform,
+      railSnapTypes: [...document.querySelectorAll('[data-mobile-rail]')].map(
+        (rail) => getComputedStyle(rail).scrollSnapType,
+      ),
     };
   })()`);
-  if (!reducedMotion.mediaMatches || reducedMotion.motionReady || reducedMotion.opacity !== "1" || reducedMotion.transform !== "none") {
+  if (
+    !reducedMotion.mediaMatches ||
+    reducedMotion.motionReady ||
+    reducedMotion.opacity !== "1" ||
+    reducedMotion.transform !== "none" ||
+    reducedMotion.railSnapTypes.length !== 2 ||
+    reducedMotion.railSnapTypes.some((snapType) => snapType !== "none")
+  ) {
     throw new Error(`감소된 모션 검증 실패: ${JSON.stringify(reducedMotion)}`);
   }
 
