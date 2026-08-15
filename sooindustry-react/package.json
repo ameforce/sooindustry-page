@@ -7,6 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "preview": "node tests/static-server.mjs",
+    "preview:mobile": "npm run build && node scripts/mobile-preview.mjs",
+    "preview:mobile:https": "npm run build && node scripts/mobile-preview.mjs --https",
     "profile:pdf": "npm run build && node scripts/generate-profile-pdf.mjs",
     "qa:browser": "node scripts/browser-qa.mjs",
     "lint": "eslint",
@@ -31,6 +33,7 @@
     "baseline-browser-mapping": "^2.11.13",
     "eslint": "^9",
     "eslint-config-next": "^16.3.0",
+    "qrcode": "^1.5.4",
     "tailwindcss": "^4",
     "typescript": "^5"
   }

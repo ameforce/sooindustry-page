@@ -33,6 +33,26 @@ npm run build
 npm run preview
 ```
 
+모바일 관련 변경은 먼저 가시적인 로컬 프리뷰를 엽니다. 이 명령은 최신 정적 빌드를 만든 뒤
+`http://127.0.0.1:4173`을 Chrome 또는 Edge에서 직접 열고, HTML·CSS가 참조하는 정적 자산의 `200` 응답을 병렬로 확인합니다.
+
+```bash
+npm run preview:mobile
+```
+
+실제 휴대폰 검토가 필요하고 정확한 브랜치 Pages 프리뷰를 사용할 수 없을 때만 임시 HTTPS Quick Tunnel을 명시적으로 실행합니다.
+
+```bash
+npm run preview:mobile:https
+# cloudflared가 PATH에 없다면:
+npm run preview:mobile:https -- --cloudflared C:\tools\cloudflared.exe
+```
+
+HTTPS 모드는 로컬 프리뷰를 먼저 열고, 직접 실행한 `cloudflared`의 stdout/stderr를
+`output/mobile-preview/cloudflared.log`에 보존합니다. 공개 URL의 정적 자산을 병렬 검증한 뒤
+`output/mobile-preview/mobile-preview-qr.png`를 생성하며, `Ctrl+C` 전까지 서버와 터널을 유지합니다.
+Quick Tunnel은 로컬 빌드의 임시 검토 중계일 뿐 Cloudflare Pages 배포, Git 병합, DNS 변경을 수행하지 않습니다.
+
 회사 소개서 원본은 `/company-profile/` 정적 페이지이며, 배포용 `public/sooin.pdf`는 Windows의 Chrome 또는 Edge로
 다시 생성할 수 있습니다.
 
