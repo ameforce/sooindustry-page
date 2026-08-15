@@ -52,6 +52,7 @@ HTTPS 모드는 로컬 프리뷰를 먼저 열고, 직접 실행한 `cloudflared
 `output/mobile-preview/cloudflared.log`에 보존합니다. 공개 URL의 정적 자산을 병렬 검증한 뒤
 `output/mobile-preview/mobile-preview-qr.png`를 생성하며, `Ctrl+C` 전까지 서버와 터널을 유지합니다.
 Windows/VPN 환경에서도 UDP 및 IPv6 경로 차이로 멈추지 않도록 Quick Tunnel 전송은 HTTP/2와 IPv4로 고정합니다.
+URL 발급 뒤 Cloudflare edge 연결 등록까지 확인한 후에만 공개 자산 검증을 시작합니다.
 Quick Tunnel은 로컬 빌드의 임시 검토 중계일 뿐 Cloudflare Pages 배포, Git 병합, DNS 변경을 수행하지 않습니다.
 
 회사 소개서 원본은 `/company-profile/` 정적 페이지이며, 배포용 `public/sooin.pdf`는 Windows의 Chrome 또는 Edge로
