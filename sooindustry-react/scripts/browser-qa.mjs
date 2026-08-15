@@ -292,7 +292,8 @@ async function main() {
       );
     }
     const backToTopInteraction = { visible: backToTopVisible, settledScrollY: backToTopSettled };
-    const lightboxInteraction = await lightboxCanary(cdp, width, outputDir);
+    const capabilityLightboxInteraction = await lightboxCanary(cdp, width, outputDir, "capability");
+    const lightboxInteraction = await lightboxCanary(cdp, width, outputDir, "equipment");
     if (width <= 768 && layout.menuHeight < 44) throw new Error(`모바일 메뉴 터치 영역이 44px 미만입니다: ${width}px`);
     if (width <= 768 && layout.headerBackground !== "rgb(255, 255, 255)") {
       throw new Error(`모바일 헤더가 불투명하지 않습니다 (${width}px): ${layout.headerBackground}`);
@@ -671,6 +672,7 @@ async function main() {
       height,
       layout,
       backToTopInteraction,
+      capabilityLightboxInteraction,
       lightboxInteraction,
       anchorInteraction,
       menuInteraction,
@@ -877,9 +879,14 @@ async function evaluate(cdp, expression, awaitPromise = false) {
   return result.result.value;
 }
 
-async function lightboxCanary(cdp, width, outputDir) {
+async function lightboxCanary(cdp, width, outputDir, kind) {
+  const triggerSelector = `[data-${kind}-lightbox-trigger]`;
+  const dialogSelector = `[data-${kind}-lightbox]`;
+  const titleSelector = `#${kind}-lightbox-title`;
+  const captionSelector = `#${kind}-lightbox-caption`;
+
   await evaluate(cdp, `(() => {
-    const trigger = document.querySelector('[data-equipment-lightbox-trigger]');
+    const trigger = document.querySelector('${triggerSelector}');
     trigger.scrollIntoView({ block: 'center', inline: 'nearest' });
     trigger.focus({ preventScroll: true });
     trigger.click();
@@ -887,7 +894,7 @@ async function lightboxCanary(cdp, width, outputDir) {
   await delay(150);
 
   const opened = await evaluate(cdp, `(() => {
-    const dialog = document.querySelector('[data-equipment-lightbox]');
+    const dialog = document.querySelector('${dialogSelector}');
     const close = document.querySelector('[data-lightbox-close]');
     const panel = dialog?.querySelector('[class*="lightboxPanel"]');
     const image = dialog?.querySelector('img');
@@ -899,8 +906,8 @@ async function lightboxCanary(cdp, width, outputDir) {
       bodyLocked: document.body.classList.contains('scroll-lock'),
       bodyOverflow: getComputedStyle(document.body).overflow,
       closeFocused: document.activeElement === close,
-      title: document.querySelector('#equipment-lightbox-title')?.textContent?.trim() ?? null,
-      caption: document.querySelector('#equipment-lightbox-caption')?.textContent?.replace(/\s+/g, ' ').trim() ?? null,
+      title: document.querySelector('${titleSelector}')?.textContent?.trim() ?? null,
+      caption: document.querySelector('${captionSelector}')?.textContent?.replace(/\s+/g, ' ').trim() ?? null,
       alt: image?.getAttribute('alt') ?? null,
       imageLoaded: image?.complete && image.naturalWidth > 0,
       panel: panelRect ? {
@@ -928,7 +935,7 @@ async function lightboxCanary(cdp, width, outputDir) {
     opened.panel.right > width ||
     opened.panel.bottom > (width <= 768 ? 844 : 900)
   ) {
-    throw new Error(`설비 라이트박스 열기 검증 실패 (${width}px): ${JSON.stringify(opened)}`);
+    throw new Error(`${kind} 라이트박스 열기 검증 실패 (${width}px): ${JSON.stringify(opened)}`);
   }
 
   const screenshot = await cdp.send("Page.captureScreenshot", {
@@ -936,32 +943,32 @@ async function lightboxCanary(cdp, width, outputDir) {
     fromSurface: true,
     captureBeyondViewport: false,
   });
-  const screenshotPath = resolve(outputDir, `lightbox-${width}.png`);
+  const screenshotPath = resolve(outputDir, `${kind}-lightbox-${width}.png`);
   await writeFile(screenshotPath, Buffer.from(screenshot.data, "base64"));
 
   const closeAndRead = async (selector) => {
     await evaluate(cdp, `document.querySelector('${selector}').click()`);
     await delay(80);
     return evaluate(cdp, `(() => ({
-      open: Boolean(document.querySelector('[data-equipment-lightbox]')),
+      open: Boolean(document.querySelector('${dialogSelector}')),
       bodyLocked: document.body.classList.contains('scroll-lock'),
-      focusRestored: document.activeElement === document.querySelector('[data-equipment-lightbox-trigger]'),
+      focusRestored: document.activeElement === document.querySelector('${triggerSelector}'),
     }))()`);
   };
 
   const closedByButton = await closeAndRead('[data-lightbox-close]');
   if (closedByButton.open || closedByButton.bodyLocked || !closedByButton.focusRestored) {
-    throw new Error(`라이트박스 닫기 버튼 검증 실패 (${width}px): ${JSON.stringify(closedByButton)}`);
+    throw new Error(`${kind} 라이트박스 닫기 버튼 검증 실패 (${width}px): ${JSON.stringify(closedByButton)}`);
   }
 
-  await evaluate(cdp, `document.querySelector('[data-equipment-lightbox-trigger]').click()`);
+  await evaluate(cdp, `document.querySelector('${triggerSelector}').click()`);
   await delay(80);
   const closedByBackdrop = await closeAndRead('[data-lightbox-backdrop]');
   if (closedByBackdrop.open || closedByBackdrop.bodyLocked || !closedByBackdrop.focusRestored) {
-    throw new Error(`라이트박스 배경 닫기 검증 실패 (${width}px): ${JSON.stringify(closedByBackdrop)}`);
+    throw new Error(`${kind} 라이트박스 배경 닫기 검증 실패 (${width}px): ${JSON.stringify(closedByBackdrop)}`);
   }
 
-  await evaluate(cdp, `document.querySelector('[data-equipment-lightbox-trigger]').click()`);
+  await evaluate(cdp, `document.querySelector('${triggerSelector}').click()`);
   await delay(80);
   await cdp.send("Input.dispatchKeyEvent", {
     type: "keyDown",
@@ -979,12 +986,12 @@ async function lightboxCanary(cdp, width, outputDir) {
   });
   await delay(80);
   const closedByEscape = await evaluate(cdp, `(() => ({
-    open: Boolean(document.querySelector('[data-equipment-lightbox]')),
+    open: Boolean(document.querySelector('${dialogSelector}')),
     bodyLocked: document.body.classList.contains('scroll-lock'),
-    focusRestored: document.activeElement === document.querySelector('[data-equipment-lightbox-trigger]'),
+    focusRestored: document.activeElement === document.querySelector('${triggerSelector}'),
   }))()`);
   if (closedByEscape.open || closedByEscape.bodyLocked || !closedByEscape.focusRestored) {
-    throw new Error(`라이트박스 Escape 검증 실패 (${width}px): ${JSON.stringify(closedByEscape)}`);
+    throw new Error(`${kind} 라이트박스 Escape 검증 실패 (${width}px): ${JSON.stringify(closedByEscape)}`);
   }
 
   return { opened, closedByButton, closedByBackdrop, closedByEscape, screenshotPath };
