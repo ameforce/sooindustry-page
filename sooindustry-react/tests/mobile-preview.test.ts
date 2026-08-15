@@ -83,17 +83,19 @@ test("Quick Tunnel uses a directly spawned executable and captures its URL", asy
   const fixtureRoot = await mkdtemp(join(tmpdir(), "sooin-cloudflared-fixture-"));
   const logPath = join(fixtureRoot, "cloudflared.log");
   const expectedUrl = "https://deterministic-mobile-preview.trycloudflare.com";
+  const startedAt = Date.now();
   let tunnel;
 
   try {
     tunnel = await startQuickTunnel(process.execPath, "http://127.0.0.1:4173/", logPath, {
       prefixArgs: [
         "--eval",
-        `process.stderr.write(${JSON.stringify(expectedUrl)} + "\\n"); setInterval(() => {}, 1000);`,
+        `process.stderr.write(${JSON.stringify(expectedUrl)} + "\\n"); setTimeout(() => process.stderr.write("Registered tunnel connection\\n"), 50); setInterval(() => {}, 1000);`,
         "--",
       ],
     });
     assert.equal(tunnel.url, expectedUrl);
+    assert.ok(Date.now() - startedAt >= 40, "URL announcement alone must not mark the tunnel ready");
   } finally {
     tunnel?.close();
     await new Promise((resolveDelay) => setTimeout(resolveDelay, 50));
