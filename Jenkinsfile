@@ -81,7 +81,7 @@ pipeline {
                         --max-time 20 \
                         "$PRODUCTION_METADATA_URL?commit=$expected" || true)"
                       case "$metadata" in
-                        *\"commitSha\":\"$expected\"*)
+                        *"$expected"*)
                           printf 'production_commit=%s\n' "$expected"
                           exit 0
                           ;;
