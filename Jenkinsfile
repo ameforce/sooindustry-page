@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label "enm-server-docker-agent" }
 
     options {
         disableConcurrentBuilds()
