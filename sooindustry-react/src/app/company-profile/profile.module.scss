@@ -1,0 +1,489 @@
+.profile {
+  padding-top: var(--header-height);
+  background: #e8ebef;
+  color: var(--color-navy-900);
+}
+
+.sheet {
+  position: relative;
+  width: min(100%, 210mm);
+  min-height: 297mm;
+  margin: 0 auto 24px;
+  padding: 17mm 16mm 15mm;
+  overflow: hidden;
+  background: var(--color-white);
+}
+
+.cover {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--color-white);
+}
+
+.coverImage,
+.coverShade {
+  position: absolute;
+  inset: 0;
+}
+
+.coverImage img {
+  object-fit: cover;
+  object-position: 58% center;
+}
+
+.coverShade {
+  z-index: 1;
+  background: linear-gradient(110deg, rgb(7 20 38 / 94%) 4%, rgb(7 20 38 / 76%) 51%, rgb(7 20 38 / 25%) 100%);
+}
+
+.coverHeader,
+.coverCopy,
+.coverFooter {
+  position: relative;
+  z-index: 2;
+}
+
+.coverHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 10pt;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+}
+
+.coverCopy {
+  p {
+    margin: 0 0 10mm;
+    color: var(--color-red-on-dark);
+    font-size: 8pt;
+    font-weight: 750;
+    letter-spacing: 0.18em;
+  }
+
+  h1 {
+    max-width: 150mm;
+    margin: 0;
+    font-size: 38pt;
+    letter-spacing: -0.06em;
+    line-height: 1.06;
+  }
+
+  strong {
+    display: block;
+    margin-top: 12mm;
+    font-size: 12pt;
+    letter-spacing: 0.12em;
+  }
+}
+
+.coverFooter {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 6mm;
+  border-top: 0.35mm solid rgb(255 255 255 / 38%);
+  color: rgb(255 255 255 / 72%);
+  font-size: 8pt;
+}
+
+.profileHeader {
+  display: flex;
+  justify-content: space-between;
+  padding-bottom: 5mm;
+  border-bottom: 0.3mm solid var(--color-border-strong);
+  color: var(--color-text-secondary);
+  font-size: 7.5pt;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+
+  p {
+    margin: 0;
+    color: var(--color-red-500);
+  }
+}
+
+.profileHeaderDark {
+  border-bottom-color: rgb(255 255 255 / 30%);
+  color: rgb(255 255 255 / 62%);
+}
+
+.titleBlock {
+  margin-top: 15mm;
+
+  > p {
+    margin: 0 0 4mm;
+    color: var(--color-red-500);
+    font-size: 7.5pt;
+    font-weight: 750;
+    letter-spacing: 0.16em;
+  }
+
+  h2 {
+    max-width: 165mm;
+    margin: 0;
+    font-size: 27pt;
+    letter-spacing: -0.055em;
+    line-height: 1.15;
+    word-break: keep-all;
+  }
+}
+
+.overviewGrid {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 12mm;
+  margin-top: 17mm;
+}
+
+.overviewCopy {
+  p {
+    margin: 0 0 5mm;
+    color: var(--color-text-secondary);
+    font-size: 10pt;
+    line-height: 1.75;
+    word-break: keep-all;
+  }
+}
+
+.factGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border-top: 0.3mm solid var(--color-border-strong);
+  border-left: 0.3mm solid var(--color-border-strong);
+
+  div {
+    min-height: 31mm;
+    padding: 6mm;
+    border-right: 0.3mm solid var(--color-border-strong);
+    border-bottom: 0.3mm solid var(--color-border-strong);
+  }
+
+  dt {
+    color: var(--color-red-500);
+    font-size: 7pt;
+    font-weight: 750;
+  }
+
+  dd {
+    margin: 4mm 0 0;
+    font-size: 11pt;
+    font-weight: 700;
+    line-height: 1.4;
+    word-break: keep-all;
+  }
+}
+
+.scopeBand {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 11mm 16mm 13mm;
+  background: var(--color-navy-900);
+  color: var(--color-white);
+
+  > p {
+    margin: 0 0 6mm;
+    color: var(--color-red-on-dark);
+    font-size: 7pt;
+    font-weight: 750;
+    letter-spacing: 0.16em;
+  }
+
+  ul {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    padding-left: 5mm;
+    border-left: 0.3mm solid rgb(255 255 255 / 30%);
+    font-size: 9pt;
+    font-weight: 650;
+  }
+}
+
+.productGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8mm 5mm;
+  margin-top: 12mm;
+
+  article {
+    border: 0.3mm solid var(--color-border);
+  }
+
+  article > div:last-child {
+    padding: 5mm;
+  }
+
+  span {
+    color: var(--color-red-500);
+    font-size: 7pt;
+    font-weight: 750;
+  }
+
+  h3 {
+    margin: 2mm 0;
+    font-size: 13pt;
+  }
+
+  p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 8pt;
+    line-height: 1.55;
+  }
+}
+
+.productImage {
+  position: relative;
+  aspect-ratio: 16 / 8.5;
+  overflow: hidden;
+  background: var(--color-neutral-100);
+
+  img {
+    object-fit: cover;
+  }
+}
+
+.productFootnote {
+  margin: 7mm 0 0;
+  color: var(--color-text-secondary);
+  font-size: 7.5pt;
+  text-align: right;
+}
+
+.proof {
+  background: var(--color-navy-800);
+  color: var(--color-white);
+}
+
+.titleBlockDark {
+  > p {
+    color: var(--color-red-on-dark);
+  }
+}
+
+.proofGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 5mm;
+  margin-top: 12mm;
+
+  figure {
+    margin: 0;
+  }
+
+  figcaption {
+    display: grid;
+    gap: 1mm;
+    padding-top: 3mm;
+    border-top: 0.3mm solid rgb(255 255 255 / 28%);
+  }
+
+  strong {
+    font-size: 8pt;
+  }
+
+  span {
+    color: rgb(255 255 255 / 58%);
+    font-size: 7pt;
+  }
+}
+
+.proofFeatured {
+  grid-column: 1 / -1;
+}
+
+.proofImage {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  margin-bottom: 3mm;
+  overflow: hidden;
+  background: var(--color-navy-900);
+
+  img {
+    object-fit: cover;
+  }
+}
+
+.proofFeatured .proofImage {
+  aspect-ratio: 16 / 8.2;
+}
+
+.projectSteps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 14mm 0 0;
+  padding: 0;
+  border-top: 0.3mm solid var(--color-border-strong);
+  border-left: 0.3mm solid var(--color-border-strong);
+  list-style: none;
+
+  li {
+    min-height: 43mm;
+    padding: 7mm;
+    border-right: 0.3mm solid var(--color-border-strong);
+    border-bottom: 0.3mm solid var(--color-border-strong);
+  }
+
+  span {
+    color: var(--color-red-500);
+    font-size: 7pt;
+    font-weight: 750;
+  }
+
+  strong {
+    display: block;
+    margin-top: 7mm;
+    font-size: 16pt;
+  }
+
+  p {
+    margin: 3mm 0 0;
+    color: var(--color-text-secondary);
+    font-size: 8pt;
+  }
+}
+
+.projectClosing {
+  display: grid;
+  grid-template-columns: 0.82fr 1.18fr;
+  gap: 12mm;
+  align-items: end;
+  margin-top: 16mm;
+
+  > p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    font-size: 10pt;
+    line-height: 1.7;
+    word-break: keep-all;
+  }
+
+  > div {
+    padding: 9mm;
+    background: var(--color-red-500);
+    color: var(--color-white);
+  }
+
+  span,
+  small {
+    display: block;
+  }
+
+  span {
+    font-size: 7pt;
+    font-weight: 750;
+    letter-spacing: 0.16em;
+  }
+
+  strong {
+    display: block;
+    margin: 4mm 0;
+    font-size: 16pt;
+  }
+
+  small {
+    color: rgb(255 255 255 / 74%);
+    font-size: 7pt;
+  }
+}
+
+@media (max-width: 700px) {
+  .sheet {
+    width: 100%;
+    min-height: auto;
+    margin-bottom: 10px;
+    padding: 56px 20px;
+  }
+
+  .cover {
+    min-height: calc(100svh - var(--header-height));
+  }
+
+  .coverCopy h1 {
+    font-size: clamp(2.7rem, 14vw, 4.8rem);
+  }
+
+  .coverFooter,
+  .overviewGrid,
+  .productGrid,
+  .projectClosing {
+    grid-template-columns: 1fr;
+  }
+
+  .coverFooter {
+    display: grid;
+    gap: 8px;
+  }
+
+  .scopeBand {
+    position: static;
+    margin: 48px -20px -56px;
+    padding: 36px 20px;
+  }
+
+  .scopeBand ul,
+  .projectSteps {
+    grid-template-columns: 1fr;
+  }
+
+  .scopeBand li {
+    padding: 12px 0;
+    border-top: 1px solid rgb(255 255 255 / 25%);
+    border-left: 0;
+  }
+
+  .proofGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .proofFeatured {
+    grid-column: auto;
+  }
+}
+
+@media print {
+  :global(body:has(.company-profile-document)) {
+    background: var(--color-white);
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  :global(body:has(.company-profile-document) .app-shell > header),
+  :global(body:has(.company-profile-document) .app-shell > footer),
+  :global(body:has(.company-profile-document) .skip-link) {
+    display: none !important;
+  }
+
+  .profile {
+    padding: 0;
+    background: var(--color-white);
+  }
+
+  .sheet {
+    width: 210mm;
+    height: 297mm;
+    min-height: 297mm;
+    margin: 0;
+    break-after: page;
+    page-break-after: always;
+  }
+
+  .sheet:last-child {
+    break-after: auto;
+    page-break-after: auto;
+  }
+}
+
+@page {
+  size: A4 portrait;
+  margin: 0;
+}

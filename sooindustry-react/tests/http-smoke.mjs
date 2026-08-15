@@ -22,7 +22,14 @@ try {
   assert.equal(home.headers.get("x-powered-by"), null);
   assert.match(home.headers.get("content-security-policy") ?? "", /frame-ancestors 'none'/);
   assert.match(home.headers.get("strict-transport-security") ?? "", /max-age=31536000/);
-  assert.match(await home.text(), /https:\/\/sooindustrykorea\.com\//);
+  const homeBody = await home.text();
+  assert.match(homeBody, /https:\/\/sooindustrykorea\.com\//);
+  assert.match(homeBody, /rel="icon"[^>]+href="\/img\/sooin-logo\.gif"/);
+  assert.doesNotMatch(homeBody, /href="\/favicon\.ico/);
+
+  const brandIcon = await fetch(new URL("/img/sooin-logo.gif", origin));
+  assert.equal(brandIcon.status, 200);
+  assert.match(brandIcon.headers.get("content-type") ?? "", /image\/gif/);
 
   for (const [path, expectedLocation] of [
     ["/home", "/"],
@@ -60,6 +67,7 @@ try {
       canonical: "https://sooindustrykorea.com/",
       redirects: 4,
       pdf: 200,
+      favicon: 200,
       robots: 200,
       sitemap: 200,
       notFound: 404,

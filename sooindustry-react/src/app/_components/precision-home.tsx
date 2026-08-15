@@ -1,49 +1,56 @@
 import Image from "next/image";
 import Link from "next/link";
-import { capabilities, equipmentGallery, processSteps } from "@/data/precisionProof";
+import { companyContact } from "@/data/companyContact";
+import { capabilities, equipmentGallery, processDescriptions, processSteps } from "@/data/precisionProof";
 import { ContactForm } from "./contact-form";
+import { AnchorNavigationDirector } from "./anchor-navigation-director";
+import { BackToTopButton } from "./back-to-top-button";
+import { DragScrollDirector } from "./drag-scroll-director";
+import { EquipmentGallery } from "./equipment-gallery";
+import { MotionDirector } from "./motion-director";
 import styles from "./precision-home.module.scss";
 
 export function PrecisionHome() {
   return (
-    <div className={styles.page}>
+    <div className={styles.page} id="precision-home">
+      <DragScrollDirector scopeId="precision-home" />
+      <MotionDirector scopeId="precision-home" />
+      <AnchorNavigationDirector scopeId="precision-home" />
+      <BackToTopButton />
       <section className={styles.hero} aria-labelledby="hero-title">
-        <div className={styles.heroCopy}>
+        <div className={styles.heroCopy} data-reveal>
           <p className={styles.eyebrow}>SOOIN INDUSTRY</p>
-          <h1 id="hero-title">
-            열처리 산업로의
-            <br />
-            합리화와 효율화
+          <h1 id="hero-title" data-wrap-check>
+            <span className={styles.phrase}>공정에 맞춘</span>{" "}
+            <span className={styles.phrase}>열처리 산업로</span>
           </h1>
-          <p className={styles.lead}>
-            수인산업이 앞서갑니다. 실제 설비와 제품군을 한눈에 확인해 보세요.
+          <p className={styles.lead} data-wrap-check>
+            상담부터 설계, 제작, 설치까지. 수인산업은 실제 제작 설비를 근거로 필요한 열처리 시스템을 함께
+            검토합니다.
           </p>
           <div className={styles.heroActions}>
-            <Link className={styles.primaryButton} href="#equipment">
-              실제 설비 보기 <span aria-hidden="true">↗</span>
-            </Link>
-            <Link className={styles.secondaryButton} href="#contact">
-              문의하기
+            <Link className={styles.primaryButton} href="#contact" data-primary-action>
+              제작 상담하기 <span aria-hidden="true">↗</span>
             </Link>
           </div>
           <dl className={styles.heroIndex} aria-label="홈페이지 주요 정보">
             <div>
               <dt>01</dt>
-              <dd>제품군 안내</dd>
+              <dd>주문형 설비</dd>
             </div>
             <div>
               <dt>02</dt>
-              <dd>실제 설비</dd>
+              <dd>제작 사례 공개</dd>
             </div>
             <div>
               <dt>03</dt>
-              <dd>문의 경로</dd>
+              <dd>설계부터 설치까지</dd>
             </div>
           </dl>
         </div>
-        <div className={styles.heroVisual}>
+        <div className={styles.heroVisual} data-reveal data-equipment-hero>
           <Image
-            src="/img/general/misc-3.png"
+            src="/img/general/misc-3.webp"
             alt="수인산업 열처리 산업로 실제 설비"
             fill
             loading="eager"
@@ -51,31 +58,42 @@ export function PrecisionHome() {
           />
           <div className={styles.imageLabel}>
             <span>ACTUAL EQUIPMENT</span>
-            <strong>실제 설비 이미지</strong>
+            <strong>설비 · 제어 · 현장</strong>
           </div>
         </div>
       </section>
 
-      <section className={styles.intro} id="company" aria-labelledby="company-title">
+      <aside className={styles.trustBar} aria-label="수인산업 프로젝트 대응 범위" data-reveal>
+        <p data-engineering-scope data-wrap-check><span>ENGINEERING</span> <span>SCOPE</span></p>
+        <ul>
+          <li>고객 공정 조건 검토</li>
+          <li>열처리 설비 설계·제작</li>
+          <li>설치·시공·사후관리</li>
+        </ul>
+      </aside>
+
+      <section className={styles.intro} id="company" aria-labelledby="company-title" data-reveal data-anchor-target>
         <SectionHeading number="01" label="ABOUT" title="설비를 먼저 보여주는 회사 소개" id="company-title" />
         <div className={styles.introGrid}>
           <p className={styles.introLead}>열처리 산업로 제작, 수인산업에게 맡겨 주세요.</p>
           <div className={styles.introBody}>
             <p>
-              장식적인 설명보다 실제 제작 설비와 확인 가능한 제품군을 중심으로 수인산업의 작업 범위를 소개합니다.
+              수인산업은 진공로, 침탄로, 분위기로, 전기로와 가스연질화로 등 열처리 산업로를 설계·제작합니다.
             </p>
             <p>
-              프로젝트 상담부터 설계, 제작, 설치까지 필요한 단계는 문의 내용을 바탕으로 안내합니다.
+              장식적인 설명보다 실제 제작 설비와 확인 가능한 제품군을 중심으로 작업 범위를 소개하고, 프로젝트
+              조건에 맞춰 설치·시공·사후관리 단계를 안내합니다.
             </p>
           </div>
         </div>
       </section>
 
-      <section className={styles.capabilities} id="capabilities" aria-labelledby="capabilities-title">
+      <section className={styles.capabilities} id="capabilities" aria-labelledby="capabilities-title" data-reveal data-anchor-target>
         <SectionHeading number="02" label="CAPABILITIES" title="주요 열처리 설비" id="capabilities-title" />
-        <div className={styles.cardGrid}>
+        <p className={styles.railHint}>옆으로 밀어 설비를 살펴보세요</p>
+        <div className={styles.cardGrid} aria-label="주요 열처리 설비 목록" data-mobile-rail="capabilities">
           {capabilities.map((item) => (
-            <article className={styles.capabilityCard} key={item.number}>
+            <article className={styles.capabilityCard} key={item.number} data-reveal>
               <div className={styles.cardImage}>
                 <Image src={item.image} alt={`${item.title} 실제 이미지`} fill sizes="(max-width: 700px) 100vw, 25vw" />
               </div>
@@ -88,55 +106,136 @@ export function PrecisionHome() {
             </article>
           ))}
         </div>
+        <RailNavigator rail="capabilities" count={capabilities.length} label="주요 열처리 설비 탐색 위치" />
       </section>
 
-      <section className={styles.equipment} id="equipment" aria-labelledby="equipment-title">
+      <section className={styles.equipment} id="equipment" aria-labelledby="equipment-title" data-reveal data-anchor-target>
         <div className={styles.equipmentHeading}>
           <SectionHeading number="03" label="PROOF" title="실제 설비로 확인하세요" id="equipment-title" dark />
           <p>기존 홈페이지에 등록된 수인산업의 실제 설비 사진을 그대로 사용했습니다.</p>
+          <span className={styles.railHintDark}>옆으로 밀어 현장 사진을 확인하세요</span>
         </div>
-        <div className={styles.gallery}>
-          {equipmentGallery.map((item) => (
-            <figure className={item.featured ? styles.featuredFigure : styles.figure} key={item.image}>
-              <div className={styles.galleryImage}>
-                <Image src={item.image} alt={`${item.title} — ${item.description}`} fill sizes={item.featured ? "(max-width: 900px) 100vw, 58vw" : "(max-width: 900px) 50vw, 21vw"} />
-              </div>
-              <figcaption>
-                <strong>{item.title}</strong>
-                <span>{item.description}</span>
-              </figcaption>
-            </figure>
-          ))}
-        </div>
+        <EquipmentGallery items={equipmentGallery} />
+        <RailNavigator rail="equipment" count={equipmentGallery.length} label="실제 설비 사진 탐색 위치" dark />
       </section>
 
-      <section className={styles.process} id="process" aria-labelledby="process-title">
-        <SectionHeading number="04" label="PROCESS" title="프로젝트 진행 흐름" id="process-title" />
+      <section className={styles.process} id="process" aria-labelledby="process-title" data-reveal data-anchor-target>
+        <div className={styles.processAtmosphere} aria-hidden="true">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className={styles.processIntro}>
+          <SectionHeading number="04" label="PROCESS" title="프로젝트 진행 흐름" id="process-title" dark />
+          <p>
+            고객 공정에서 시작해 현장 설치까지, 한 단계씩 확인하며 설비를 완성합니다.
+          </p>
+        </div>
         <ol className={styles.processList}>
           {processSteps.map((step, index) => (
-            <li key={step}>
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <strong>{step}</strong>
+            <li key={step} data-reveal>
+              <span className={styles.processNumber}>{String(index + 1).padStart(2, "0")}</span>
+              <div>
+                <strong>{step}</strong>
+                <p>{processDescriptions[index]}</p>
+              </div>
+              <span className={styles.processArrow} aria-hidden="true">→</span>
             </li>
           ))}
         </ol>
-        <p className={styles.processNote}>프로젝트 범위와 설비 조건에 따라 필요한 단계와 진행 순서를 안내합니다.</p>
+        <p className={styles.processNote}>프로젝트 범위와 설비 조건에 따라 필요한 단계와 진행 순서를 조정합니다.</p>
       </section>
 
-      <section className={styles.contact} id="contact" aria-labelledby="contact-title">
+      <section className={styles.contact} id="contact" aria-labelledby="contact-title" data-reveal data-anchor-target>
         <div className={styles.contactCopy}>
           <p className={styles.eyebrowLight}>05 · CONTACT</p>
-          <h2 id="contact-title">열처리 산업로 제작을 상담해 보세요.</h2>
-          <p>
+          <h2 id="contact-title" data-wrap-check>
+            <span className={styles.phrase}>열처리 산업로 제작을</span>{" "}
+            <span className={styles.phrase}>상담해 보세요.</span>
+          </h2>
+          <p data-wrap-check>
             설비 종류와 필요한 작업 범위를 남기면 검토할 내용을 미리 정리할 수 있습니다. 현재 문의 폼은 실제 전송
             연결 전 프리뷰입니다.
           </p>
-          <Link href="/sooin.pdf" download>
+          <div className={styles.contactDetails} aria-label="수인산업 연락처와 위치">
+            <a
+              className={styles.phoneLink}
+              href={companyContact.phoneHref}
+              aria-label={`${companyContact.phoneDisplay}로 전화 걸기`}
+              data-wrap-check
+            >
+              <span>전화 문의</span>
+              <strong>{companyContact.phoneDisplay}</strong>
+              <span aria-hidden="true">↗</span>
+            </a>
+            <div className={styles.faxLine} aria-label={`팩스 ${companyContact.faxDisplay}`}>
+              <span>FAX</span>
+              <strong>{companyContact.faxDisplay}</strong>
+            </div>
+            <address className={styles.location}>
+              <span>회사 위치</span>
+              <strong data-wrap-check>
+                {companyContact.addressLine1} {companyContact.addressLine2}
+              </strong>
+              <div className={styles.mapLinks}>
+                <a
+                  href={companyContact.naverMapHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="네이버 지도에서 수인산업 위치 보기"
+                >
+                  네이버 지도 <span aria-hidden="true">↗</span>
+                </a>
+                <a
+                  href={companyContact.kakaoMapHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="카카오맵에서 수인산업 위치 보기"
+                >
+                  카카오맵 <span aria-hidden="true">↗</span>
+                </a>
+              </div>
+            </address>
+          </div>
+          <Link className={styles.profileDownload} href="/sooin.pdf" download>
             회사 소개서 내려받기 <span aria-hidden="true">↓</span>
           </Link>
         </div>
         <ContactForm />
       </section>
+    </div>
+  );
+}
+
+function RailNavigator({
+  count,
+  dark = false,
+  label,
+  rail,
+}: Readonly<{
+  count: number;
+  dark?: boolean;
+  label: string;
+  rail: string;
+}>) {
+  return (
+    <div
+      className={`${styles.railNavigator} ${dark ? styles.railNavigatorDark : ""}`}
+      data-rail-controls={rail}
+    >
+      <label htmlFor={`rail-${rail}`}>DRAG / SCROLL</label>
+      <input
+        id={`rail-${rail}`}
+        type="range"
+        min="0"
+        max="100"
+        defaultValue="0"
+        aria-label={label}
+        data-rail-range={rail}
+      />
+      <output htmlFor={`rail-${rail}`} aria-live="polite" data-rail-count={rail}>
+        01 / {String(count).padStart(2, "0")}
+      </output>
     </div>
   );
 }
@@ -159,7 +258,7 @@ function SectionHeading({
       <p>
         <span>{number}</span> {label}
       </p>
-      <h2 id={id}>{title}</h2>
+      <h2 id={id} data-wrap-check>{title}</h2>
     </div>
   );
 }

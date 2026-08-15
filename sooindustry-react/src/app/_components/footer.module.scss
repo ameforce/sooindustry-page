@@ -58,11 +58,38 @@
   }
 }
 
+.businessDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  color: rgb(255 255 255 / 58%);
+  font-size: 0.72rem;
+  line-height: 1.6;
+}
+
+.copyright {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
 @media (max-width: 700px) {
   .top,
   .bottom {
     align-items: flex-start;
     flex-direction: column;
+  }
+
+  .bottom {
+    gap: 16px;
+  }
+
+  .businessDetails {
+    display: grid;
+    gap: 4px;
+  }
+
+  .copyright {
+    text-align: left;
   }
 
   .top nav {
