@@ -57,6 +57,12 @@ try {
   assert.equal(sitemap.status, 200);
   assert.match(await sitemap.text(), /https:\/\/sooindustrykorea\.com\//);
 
+  const deployment = await fetch(new URL("/deployment.json", origin));
+  assert.equal(deployment.status, 200);
+  const deploymentMetadata = await deployment.json();
+  assert.match(deploymentMetadata.commitSha, /^(?:[0-9a-f]{40}|unknown)$/);
+  assert.equal(typeof deploymentMetadata.branch, "string");
+
   const missing = await fetch(new URL("/does-not-exist", origin));
   assert.equal(missing.status, 404);
   assert.match(await missing.text(), /페이지를 찾을 수 없습니다/);
@@ -70,6 +76,7 @@ try {
       favicon: 200,
       robots: 200,
       sitemap: 200,
+      deploymentMetadata: 200,
       notFound: 404,
       securityHeaders: 5,
     }),

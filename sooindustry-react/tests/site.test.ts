@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import test from "node:test";
 import { companyContact } from "../src/data/companyContact.ts";
+import { equipmentGallery } from "../src/data/precisionProof.ts";
 import { getPublicSiteUrl } from "../src/lib/site.ts";
 
 test("public site URL is the canonical HTTPS production origin", () => {
@@ -23,6 +24,17 @@ test("company contact data uses the verified registration, representative, phone
     "https://map.naver.com/p/entry/place/37323307?placePath=%2Fhome",
   );
   assert.equal(companyContact.kakaoMapHref, "https://place.map.kakao.com/1523327998");
+});
+
+test("equipment gallery includes the curated source images without duplicate paths", () => {
+  const images = equipmentGallery.map((item) => item.image);
+
+  assert.equal(new Set(images).size, images.length);
+  assert.deepEqual(images.slice(0, 3), [
+    "/img/equipment/vacuum-line-pair.jpg",
+    "/img/equipment/vacuum-system-rear.jpg",
+    "/img/equipment/vacuum-chamber-interior.jpg",
+  ]);
 });
 
 test("repository policy requires a real-phone HTTPS preview for mobile acceptance", async () => {

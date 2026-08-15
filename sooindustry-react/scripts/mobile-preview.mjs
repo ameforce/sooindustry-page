@@ -9,6 +9,7 @@ import { createPagesPreview } from "../tests/static-server.mjs";
 const appRoot = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const outputRoot = resolve(appRoot, "output/mobile-preview");
 const tunnelPattern = /https:\/\/[a-z0-9-]+\.trycloudflare\.com/gi;
+const tunnelReadyPattern = /Registered tunnel connection/i;
 
 export function parsePreviewArgs(argv) {
   const options = {
@@ -195,6 +196,22 @@ export function openVisibleBrowser(url) {
   child.unref();
 }
 
+export function buildQuickTunnelArgs(localUrl, prefixArgs = []) {
+  return [
+    ...prefixArgs,
+    "tunnel",
+    "--url",
+    localUrl,
+    "--protocol",
+    "http2",
+    "--edge-ip-version",
+    "4",
+    "--no-autoupdate",
+    "--loglevel",
+    "info",
+  ];
+}
+
 /**
  * @param {string} cloudflaredPath
  * @param {string} localUrl
@@ -211,7 +228,7 @@ export async function startQuickTunnel(
   const log = createWriteStream(logPath, { flags: "w", encoding: "utf8" });
   const child = spawnImpl(
     cloudflaredPath,
-    [...prefixArgs, "tunnel", "--url", localUrl, "--no-autoupdate", "--loglevel", "info"],
+    buildQuickTunnelArgs(localUrl, prefixArgs),
     {
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
@@ -235,6 +252,8 @@ export async function startQuickTunnel(
   try {
     url = await new Promise((resolveUrl, rejectUrl) => {
       let output = "";
+      let announcedUrl = null;
+      let edgeRegistered = false;
       let settled = false;
       const finish = (callback, value) => {
         if (settled) return;
@@ -245,7 +264,9 @@ export async function startQuickTunnel(
       const inspect = (chunk) => {
         output = `${output}${chunk}`.slice(-32_768);
         const match = output.match(tunnelPattern)?.at(-1);
-        if (match) finish(resolveUrl, match);
+        if (match) announcedUrl = match;
+        if (tunnelReadyPattern.test(output)) edgeRegistered = true;
+        if (announcedUrl && edgeRegistered) finish(resolveUrl, announcedUrl);
       };
       child.stdout.on("data", inspect);
       child.stderr.on("data", inspect);
@@ -255,8 +276,8 @@ export async function startQuickTunnel(
       });
       const timer = setTimeout(() => {
         cleanup();
-        finish(rejectUrl, new Error(`45초 안에 Quick Tunnel URL을 확인하지 못했습니다. 로그: ${logPath}`));
-      }, 45_000);
+        finish(rejectUrl, new Error(`60초 안에 Quick Tunnel URL과 edge 연결 등록을 확인하지 못했습니다. 로그: ${logPath}`));
+      }, 60_000);
     });
   } catch (error) {
     cleanup();
