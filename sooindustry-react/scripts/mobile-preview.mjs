@@ -195,6 +195,20 @@ export function openVisibleBrowser(url) {
   child.unref();
 }
 
+export function buildQuickTunnelArgs(localUrl, prefixArgs = []) {
+  return [
+    ...prefixArgs,
+    "tunnel",
+    "--url",
+    localUrl,
+    "--protocol",
+    "http2",
+    "--no-autoupdate",
+    "--loglevel",
+    "info",
+  ];
+}
+
 /**
  * @param {string} cloudflaredPath
  * @param {string} localUrl
@@ -211,7 +225,7 @@ export async function startQuickTunnel(
   const log = createWriteStream(logPath, { flags: "w", encoding: "utf8" });
   const child = spawnImpl(
     cloudflaredPath,
-    [...prefixArgs, "tunnel", "--url", localUrl, "--no-autoupdate", "--loglevel", "info"],
+    buildQuickTunnelArgs(localUrl, prefixArgs),
     {
       shell: false,
       stdio: ["ignore", "pipe", "pipe"],
