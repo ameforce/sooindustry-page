@@ -101,8 +101,8 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
       };
 
       const onPointerDown = (event: PointerEvent) => {
-        // One Pointer Events path serves mouse, pen, and touch. CSS keeps vertical panning native.
-        if (!event.isPrimary || event.button !== 0) return;
+        // Touch is compositor-native; this handler adds drag-to-scroll only for mouse and pen.
+        if (event.pointerType === "touch" || !event.isPrimary || event.button !== 0) return;
         if (rail.scrollWidth <= rail.clientWidth) return;
 
         pointerId = event.pointerId;

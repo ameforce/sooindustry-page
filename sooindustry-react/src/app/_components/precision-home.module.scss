@@ -1345,7 +1345,8 @@
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y pinch-zoom;
+    // The rail owns horizontal touch gestures; vertical page scrolling begins outside it.
+    touch-action: pan-x pinch-zoom;
     border: 0;
     scroll-padding-inline: 0 20px;
     scroll-snap-type: x proximity;
@@ -1408,7 +1409,8 @@
     overflow-x: auto;
     overscroll-behavior-inline: contain;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y pinch-zoom;
+    // The rail owns horizontal touch gestures; vertical page scrolling begins outside it.
+    touch-action: pan-x pinch-zoom;
     scroll-padding-inline: 0 20px;
     scroll-snap-type: x proximity;
     scrollbar-width: none;

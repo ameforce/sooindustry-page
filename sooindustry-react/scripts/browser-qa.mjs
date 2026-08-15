@@ -450,7 +450,8 @@ async function main() {
           (rail) =>
             rail.scrollWidth <= rail.clientWidth ||
             rail.scrollSnapType === "none" ||
-            !rail.touchAction.includes("pan-y") ||
+            !rail.touchAction.includes("pan-x") ||
+            rail.touchAction.includes("pan-y") ||
             !rail.nativeScrollbarHidden ||
             !rail.rangeVisible,
         )
@@ -495,12 +496,23 @@ async function main() {
       ];
       if (
         verticalTouchRails.some(
-          (result) => result.pageScrollDelta < 40 || result.scrollLeft !== 0 || result.dragging !== null,
+          (result) =>
+            Math.abs(result.pageScrollDelta) > 2 ||
+            result.scrollLeft !== 0 ||
+            result.dragging !== null ||
+            result.lightboxOpen ||
+            result.bodyLocked,
         )
       ) {
-        throw new Error(`모바일 수직 레일 스크롤 보존 실패: ${JSON.stringify(verticalTouchRails)}`);
+        throw new Error(`모바일 갤러리 수직 흔들림 차단 실패: ${JSON.stringify(verticalTouchRails)}`);
       }
       railInteraction = railInteraction.map((rail, index) => ({ ...rail, verticalTouch: verticalTouchRails[index] }));
+
+      const outsideVerticalTouch = await touchVerticalDragOutsideRail(cdp);
+      if (outsideVerticalTouch.pageScrollDelta < 40) {
+        throw new Error(`모바일 갤러리 외부 수직 스크롤 실패: ${JSON.stringify(outsideVerticalTouch)}`);
+      }
+      railInteraction[0].outsideVerticalTouch = outsideVerticalTouch;
 
       const rangeInteraction = await evaluate(cdp, `(() => {
         return [...document.querySelectorAll('[data-rail-range]')].map((range) => {
@@ -1251,6 +1263,62 @@ async function touchVerticalDragRail(cdp, railName) {
       bodyLocked: document.body.classList.contains('scroll-lock'),
     };
   })()`);
+}
+
+async function touchVerticalDragOutsideRail(cdp) {
+  const geometry = await evaluate(cdp, `(() => {
+    const target = document.querySelector('#equipment [class*="equipmentHeading"]');
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+    target.scrollIntoView({ block: 'center' });
+    root.style.scrollBehavior = previousScrollBehavior;
+    const rect = target.getBoundingClientRect();
+    const startX = Math.min(innerWidth - 32, Math.max(32, rect.left + rect.width * 0.52));
+    const startY = Math.min(innerHeight - 72, Math.max(120, rect.top + rect.height * 0.55));
+    return {
+      startX,
+      startY,
+      endX: startX + 12,
+      endY: Math.max(28, startY - 190),
+      pageScrollY: Math.round(scrollY),
+    };
+  })()`);
+  await delay(80);
+
+  const touchPoint = (x, y) => ({
+    x,
+    y,
+    id: 3,
+    radiusX: 5,
+    radiusY: 5,
+    rotationAngle: 0,
+    force: 1,
+  });
+
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [touchPoint(geometry.startX, geometry.startY)],
+  });
+  for (let step = 1; step <= 8; step += 1) {
+    const progress = step / 8;
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [
+        touchPoint(
+          geometry.startX + (geometry.endX - geometry.startX) * progress,
+          geometry.startY + (geometry.endY - geometry.startY) * progress,
+        ),
+      ],
+    });
+  }
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await delay(220);
+
+  return evaluate(cdp, `(() => ({
+    pageScrollDelta: Math.round(scrollY) - ${geometry.pageScrollY},
+    pageScrollY: Math.round(scrollY),
+  }))()`);
 }
 
 function delay(milliseconds) {
