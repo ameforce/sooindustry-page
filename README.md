@@ -80,6 +80,13 @@ Cloudflare Pages의 `_redirects`는 도메인 간 리다이렉트를 지원하�
 
 기존 Docker/Jenkins 서버 배포 경로는 static Pages 배포와 충돌하지 않도록 제거되었습니다.
 
+## Jenkins 검증 및 운영 배포
+
+루트 `Jenkinsfile`은 모든 브랜치에서 Node.js 24 컨테이너로 `npm ci`와 `npm run check`를 실행합니다.
+`main` 브랜치만 Jenkins Secret text 자격증명 `sooindustry-cloudflare-pages-deploy-hook`을 사용해 Cloudflare Pages Deploy Hook을 호출합니다.
+
+Cloudflare 빌드는 `out/deployment.json`에 실제 `CF_PAGES_COMMIT_SHA`를 기록합니다. Jenkins는 배포 요청 후 운영 도메인의 이 파일이 현재 `main` 커밋과 일치할 때만 배포를 성공으로 판정합니다. Deploy Hook은 Cloudflare Pages 프로젝트의 production branch인 `main`에 연결해야 합니다.
+
 ## 저장소 구조
 
 ```text

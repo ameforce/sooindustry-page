@@ -41,10 +41,25 @@ export const capabilities: ReadonlyArray<Capability> = [
 
 export const equipmentGallery: ReadonlyArray<EquipmentImage> = [
   {
+    image: "/img/equipment/vacuum-line-pair.jpg",
+    title: "진공열처리 설비 라인",
+    description: "2기 설비와 제어반을 함께 구성한 현장 전경",
+    featured: true,
+  },
+  {
+    image: "/img/equipment/vacuum-system-rear.jpg",
+    title: "진공 계통 및 배관 구성",
+    description: "펌프와 배관 계통을 확인할 수 있는 후면 구성",
+  },
+  {
+    image: "/img/equipment/vacuum-chamber-interior.jpg",
+    title: "진공로 내부 챔버",
+    description: "가열부와 지그 구조를 확인할 수 있는 내부",
+  },
+  {
     image: "/img/general/misc-1.jpg",
     title: "열처리 산업로",
     description: "실제 설비 및 제어부",
-    featured: true,
   },
   {
     image: "/img/general/misc-4.webp",

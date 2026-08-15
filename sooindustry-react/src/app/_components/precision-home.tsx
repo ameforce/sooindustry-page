@@ -5,6 +5,7 @@ import { capabilities, equipmentGallery, processDescriptions, processSteps } fro
 import { ContactForm } from "./contact-form";
 import { AnchorNavigationDirector } from "./anchor-navigation-director";
 import { BackToTopButton } from "./back-to-top-button";
+import { CapabilityGallery } from "./capability-gallery";
 import { DragScrollDirector } from "./drag-scroll-director";
 import { EquipmentGallery } from "./equipment-gallery";
 import { MotionDirector } from "./motion-director";
@@ -91,28 +92,14 @@ export function PrecisionHome() {
       <section className={styles.capabilities} id="capabilities" aria-labelledby="capabilities-title" data-reveal data-anchor-target>
         <SectionHeading number="02" label="CAPABILITIES" title="주요 열처리 설비" id="capabilities-title" />
         <p className={styles.railHint}>옆으로 밀어 설비를 살펴보세요</p>
-        <div className={styles.cardGrid} aria-label="주요 열처리 설비 목록" data-mobile-rail="capabilities">
-          {capabilities.map((item) => (
-            <article className={styles.capabilityCard} key={item.number} data-reveal>
-              <div className={styles.cardImage}>
-                <Image src={item.image} alt={`${item.title} 실제 이미지`} fill sizes="(max-width: 700px) 100vw, 25vw" />
-              </div>
-              <span className={styles.cardNumber}>{item.number}</span>
-              <h3>{item.title}</h3>
-              <p>{item.description}</p>
-              <Link href="#contact" aria-label={`${item.title} 설비 문의`}>
-                설비 문의 <span aria-hidden="true">→</span>
-              </Link>
-            </article>
-          ))}
-        </div>
+        <CapabilityGallery items={capabilities} />
         <RailNavigator rail="capabilities" count={capabilities.length} label="주요 열처리 설비 탐색 위치" />
       </section>
 
       <section className={styles.equipment} id="equipment" aria-labelledby="equipment-title" data-reveal data-anchor-target>
         <div className={styles.equipmentHeading}>
           <SectionHeading number="03" label="PROOF" title="실제 설비로 확인하세요" id="equipment-title" dark />
-          <p>기존 홈페이지에 등록된 수인산업의 실제 설비 사진을 그대로 사용했습니다.</p>
+          <p>수인산업이 제작한 실제 설비 사진으로 구성과 현장 적용 모습을 확인할 수 있습니다.</p>
           <span className={styles.railHintDark}>옆으로 밀어 현장 사진을 확인하세요</span>
         </div>
         <EquipmentGallery items={equipmentGallery} />

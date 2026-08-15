@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "postbuild": "node scripts/write-deployment-metadata.mjs",
     "preview": "node tests/static-server.mjs",
     "preview:mobile": "npm run build && node scripts/mobile-preview.mjs",
     "preview:mobile:https": "npm run build && node scripts/mobile-preview.mjs --https",
