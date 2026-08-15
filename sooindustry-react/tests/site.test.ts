@@ -9,9 +9,12 @@ test("public site URL is the canonical HTTPS production origin", () => {
   assert.equal(getPublicSiteUrl().origin, "https://sooindustrykorea.com");
 });
 
-test("company contact links use the verified phone, address, and map places", () => {
+test("company contact data uses the verified registration, representative, phone, fax, address, and map places", () => {
+  assert.equal(companyContact.businessRegistrationNumber, "439-40-00067");
+  assert.equal(companyContact.representative, "김웅기");
   assert.equal(companyContact.phoneDisplay, "032-517-2473");
   assert.equal(companyContact.phoneHref, "tel:+82325172473");
+  assert.equal(companyContact.faxDisplay, "032-567-2473");
   assert.equal(companyContact.addressLine1, "인천광역시 서구 마중로 142");
   assert.equal(companyContact.addressLine2, "나동 5호 (오류동)");
 

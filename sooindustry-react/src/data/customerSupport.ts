@@ -47,7 +47,7 @@ export type AdditionalResource = Readonly<{
 }>;
 
 export const companyFacts: ReadonlyArray<IconFact> = [
-  { icon: "nc-single-02", label: "대표이사", value: "김웅기" },
+  { icon: "nc-single-02", label: "대표이사", value: companyContact.representative },
   { icon: "nc-calendar-60", label: "설립일", value: "2015년 09월 10일" },
   { icon: "nc-trophy", label: "특허", value: "진공로 실용신안 취득" },
   { icon: "nc-settings-gear-65", label: "주요 사업", value: "열처리 산업로 제작 전문" },
@@ -94,7 +94,7 @@ export const contactMethods: ReadonlyArray<ContactMethod> = [
     ariaLabel: `${companyContact.phoneDisplay}로 전화 걸기`,
     details: [
       { label: "TEL", value: companyContact.phoneDisplay },
-      { label: "FAX", value: "032-567-2473" },
+      { label: "FAX", value: companyContact.faxDisplay },
     ],
   },
   {

@@ -168,6 +168,10 @@ export function PrecisionHome() {
               <strong>{companyContact.phoneDisplay}</strong>
               <span aria-hidden="true">↗</span>
             </a>
+            <div className={styles.faxLine} aria-label={`팩스 ${companyContact.faxDisplay}`}>
+              <span>FAX</span>
+              <strong>{companyContact.faxDisplay}</strong>
+            </div>
             <address className={styles.location}>
               <span>회사 위치</span>
               <strong data-wrap-check>

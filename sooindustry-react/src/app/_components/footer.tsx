@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { companyContact } from "@/data/companyContact";
 import styles from "./footer.module.scss";
 
 export function Footer() {
@@ -18,8 +19,15 @@ export function Footer() {
         </nav>
       </div>
       <div className={styles.bottom}>
-        <p>열처리 산업로의 합리화와 효율화</p>
-        <p>© {new Date().getFullYear()} SOOIN INDUSTRY</p>
+        <div className={styles.businessDetails} aria-label="수인산업 사업자 정보">
+          <span>대표자 {companyContact.representative}</span>
+          <span>사업자등록번호 {companyContact.businessRegistrationNumber}</span>
+          <span>전화 {companyContact.phoneDisplay}</span>
+          <span>FAX {companyContact.faxDisplay}</span>
+        </div>
+        <p className={styles.copyright}>
+          Copyright © {new Date().getFullYear()} SOOIN INDUSTRY. All rights reserved.
+        </p>
       </div>
     </footer>
   );

@@ -87,6 +87,9 @@ async function main() {
         }
       }
       const phoneLink = document.querySelector('a[href="tel:+82325172473"]');
+      const faxLine = document.querySelector('[aria-label="팩스 032-567-2473"]');
+      const footerBusinessDetails = document.querySelector('footer [aria-label="수인산업 사업자 정보"]');
+      const footerCopyright = document.querySelector('footer p[class*="copyright"]');
       const mapLinks = [...document.querySelectorAll('a[aria-label*="지도에서 수인산업 위치 보기"], a[aria-label*="카카오맵에서 수인산업 위치 보기"]')];
       const lineCount = (element) => {
         const semanticPhrases = [...element.children].filter((child) => child.tagName === 'SPAN');
@@ -165,15 +168,20 @@ async function main() {
         },
         contactInfo: {
           phoneHref: phoneLink?.getAttribute('href') ?? null,
-          phoneText: phoneLink?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+          phoneText: phoneLink?.textContent.replace(/\\s+/g, ' ').trim() ?? null,
           phoneTapHeight: phoneLink ? Math.round(phoneLink.getBoundingClientRect().height) : 0,
-          address: document.querySelector('address')?.textContent.replace(/\s+/g, ' ').trim() ?? null,
+          faxText: faxLine?.textContent.replace(/\\s+/g, ' ').trim() ?? null,
+          address: document.querySelector('address')?.textContent.replace(/\\s+/g, ' ').trim() ?? null,
           maps: mapLinks.map((link) => ({
             href: link.getAttribute('href'),
             target: link.getAttribute('target'),
             rel: link.getAttribute('rel'),
             tapHeight: Math.round(link.getBoundingClientRect().height),
           })),
+        },
+        footerInfo: {
+          businessText: footerBusinessDetails?.textContent.replace(/\\s+/g, ' ').trim() ?? null,
+          copyrightText: footerCopyright?.textContent.replace(/\\s+/g, ' ').trim() ?? null,
         },
       };
     })()`);
@@ -233,7 +241,14 @@ async function main() {
       layout.contactInfo.phoneHref !== "tel:+82325172473" ||
       !layout.contactInfo.phoneText.includes("032-517-2473") ||
       layout.contactInfo.phoneTapHeight < 44 ||
+      layout.contactInfo.faxText !== "FAX032-567-2473" ||
       !layout.contactInfo.address.includes("인천광역시 서구 마중로 142 나동 5호 (오류동)") ||
+      !layout.footerInfo.businessText.includes("대표자 김웅기") ||
+      !layout.footerInfo.businessText.includes("사업자등록번호 439-40-00067") ||
+      !layout.footerInfo.businessText.includes("전화 032-517-2473") ||
+      !layout.footerInfo.businessText.includes("FAX 032-567-2473") ||
+      !layout.footerInfo.copyrightText.includes("Copyright ©") ||
+      !layout.footerInfo.copyrightText.includes("SOOIN INDUSTRY. All rights reserved.") ||
       layout.contactInfo.maps.length !== 2 ||
       layout.contactInfo.maps.some(
         (link) =>

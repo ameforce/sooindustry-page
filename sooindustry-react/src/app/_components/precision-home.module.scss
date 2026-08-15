@@ -1141,6 +1141,27 @@
   }
 }
 
+.faxLine {
+  display: grid;
+  grid-template-columns: minmax(88px, auto) minmax(0, 1fr);
+  min-height: 64px;
+  align-items: center;
+  gap: 18px;
+  border-bottom: 1px solid rgb(255 255 255 / 24%);
+  color: var(--color-white);
+
+  > span {
+    color: rgb(255 255 255 / 58%);
+    font-size: 0.78rem;
+    font-weight: 700;
+  }
+
+  strong {
+    font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+    letter-spacing: -0.02em;
+  }
+}
+
 .location {
   display: grid;
   grid-template-columns: minmax(88px, auto) minmax(0, 1fr);
@@ -1666,6 +1687,16 @@
 
     strong {
       font-size: 1.12rem;
+    }
+  }
+
+  .faxLine {
+    grid-template-columns: 76px minmax(0, 1fr);
+    min-height: 60px;
+    gap: 12px;
+
+    strong {
+      font-size: 1.05rem;
     }
   }
 
