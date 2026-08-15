@@ -1244,7 +1244,11 @@ async function touchVerticalDragRail(cdp, railName) {
       axis: 'vertical',
       scrollLeft: Math.round(rail.scrollLeft),
       pageScrollDelta: Math.round(scrollY) - ${geometry.pageScrollY},
+      pageScrollY: Math.round(scrollY),
+      maxPageScrollY: Math.round(document.documentElement.scrollHeight - innerHeight),
       dragging: rail.getAttribute('data-dragging'),
+      lightboxOpen: Boolean(document.querySelector('[data-equipment-lightbox]')),
+      bodyLocked: document.body.classList.contains('scroll-lock'),
     };
   })()`);
 }

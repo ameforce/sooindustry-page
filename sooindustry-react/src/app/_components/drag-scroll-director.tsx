@@ -22,7 +22,6 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
         : null;
       const itemCount = rail.children.length;
       let pointerId: number | null = null;
-      let touchId: number | null = null;
       let startX = 0;
       let startY = 0;
       let startScrollLeft = 0;
@@ -101,16 +100,9 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
         stopDragging(preserveClickSuppression);
       };
 
-      const findTouch = (event: TouchEvent) => {
-        if (touchId === null) return null;
-        return Array.from(event.touches).find((touch) => touch.identifier === touchId)
-          ?? Array.from(event.changedTouches).find((touch) => touch.identifier === touchId)
-          ?? null;
-      };
-
       const onPointerDown = (event: PointerEvent) => {
-        // Touch is handled with a non-passive touchmove listener so WebKit can cancel only horizontal drags.
-        if (event.pointerType === "touch" || !event.isPrimary || event.button !== 0) return;
+        // One Pointer Events path serves mouse, pen, and touch. CSS keeps vertical panning native.
+        if (!event.isPrimary || event.button !== 0) return;
         if (rail.scrollWidth <= rail.clientWidth) return;
 
         pointerId = event.pointerId;
@@ -141,50 +133,6 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
 
       const onPointerUp = (event: PointerEvent) => finishPointerDrag(event, dragged);
       const onPointerCancel = (event: PointerEvent) => finishPointerDrag(event, false);
-
-      const onTouchStart = (event: TouchEvent) => {
-        if (touchId !== null || event.touches.length !== 1 || rail.scrollWidth <= rail.clientWidth) return;
-        const touch = event.touches[0];
-        touchId = touch.identifier;
-        startGesture(touch.clientX, touch.clientY);
-      };
-
-      const onTouchMove = (event: TouchEvent) => {
-        const touch = findTouch(event);
-        if (!touch) return;
-
-        const deltaX = touch.clientX - startX;
-        const deltaY = touch.clientY - startY;
-
-        if (gestureAxis === "pending") {
-          if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < DRAG_THRESHOLD) return;
-          if (Math.abs(deltaY) >= Math.abs(deltaX)) {
-            // Do not cancel a vertical intent: the page remains normally scrollable.
-            gestureAxis = "vertical";
-            touchId = null;
-            return;
-          }
-          startHorizontalDrag();
-        }
-
-        if (gestureAxis !== "horizontal") return;
-
-        // WebKit applies this only after horizontal intent is clear, avoiding diagonal page wobble.
-        if (event.cancelable) event.preventDefault();
-        rail.scrollLeft = startScrollLeft - deltaX;
-      };
-
-      const finishTouchDrag = (event: TouchEvent, preserveClickSuppression: boolean) => {
-        if (touchId === null) return;
-        const touchEnded = Array.from(event.changedTouches).some((touch) => touch.identifier === touchId);
-        if (!touchEnded) return;
-
-        touchId = null;
-        stopDragging(preserveClickSuppression);
-      };
-
-      const onTouchEnd = (event: TouchEvent) => finishTouchDrag(event, dragged);
-      const onTouchCancel = (event: TouchEvent) => finishTouchDrag(event, false);
       const onClickCapture = (event: MouseEvent) => {
         if (!suppressClick) return;
         event.preventDefault();
@@ -198,10 +146,6 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
       rail.addEventListener("pointermove", onPointerMove);
       rail.addEventListener("pointerup", onPointerUp);
       rail.addEventListener("pointercancel", onPointerCancel);
-      rail.addEventListener("touchstart", onTouchStart, { passive: true });
-      rail.addEventListener("touchmove", onTouchMove, { passive: false });
-      rail.addEventListener("touchend", onTouchEnd);
-      rail.addEventListener("touchcancel", onTouchCancel);
       rail.addEventListener("click", onClickCapture, true);
       rail.addEventListener("scroll", updateRailNavigator, { passive: true });
       range?.addEventListener("input", onRangeInput);
@@ -214,10 +158,6 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
         rail.removeEventListener("pointermove", onPointerMove);
         rail.removeEventListener("pointerup", onPointerUp);
         rail.removeEventListener("pointercancel", onPointerCancel);
-        rail.removeEventListener("touchstart", onTouchStart);
-        rail.removeEventListener("touchmove", onTouchMove);
-        rail.removeEventListener("touchend", onTouchEnd);
-        rail.removeEventListener("touchcancel", onTouchCancel);
         rail.removeEventListener("click", onClickCapture, true);
         rail.removeEventListener("scroll", updateRailNavigator);
         range?.removeEventListener("input", onRangeInput);
