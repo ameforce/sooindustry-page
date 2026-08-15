@@ -4,10 +4,25 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import test from "node:test";
 import {
+  buildQuickTunnelArgs,
   collectReferencedAssets,
   parsePreviewArgs,
   startQuickTunnel,
 } from "../scripts/mobile-preview.mjs";
+
+test("Quick Tunnel uses HTTP/2 to avoid blocked QUIC paths", () => {
+  assert.deepEqual(buildQuickTunnelArgs("http://127.0.0.1:4173/", ["fixture"]), [
+    "fixture",
+    "tunnel",
+    "--url",
+    "http://127.0.0.1:4173/",
+    "--protocol",
+    "http2",
+    "--no-autoupdate",
+    "--loglevel",
+    "info",
+  ]);
+});
 
 test("mobile preview is local-first and HTTPS is explicit", () => {
   assert.deepEqual(parsePreviewArgs([]), {
