@@ -10,7 +10,7 @@ import {
   startQuickTunnel,
 } from "../scripts/mobile-preview.mjs";
 
-test("Quick Tunnel uses HTTP/2 to avoid blocked QUIC paths", () => {
+test("Quick Tunnel uses HTTP/2 over IPv4 to avoid blocked QUIC and IPv6 paths", () => {
   assert.deepEqual(buildQuickTunnelArgs("http://127.0.0.1:4173/", ["fixture"]), [
     "fixture",
     "tunnel",
@@ -18,6 +18,8 @@ test("Quick Tunnel uses HTTP/2 to avoid blocked QUIC paths", () => {
     "http://127.0.0.1:4173/",
     "--protocol",
     "http2",
+    "--edge-ip-version",
+    "4",
     "--no-autoupdate",
     "--loglevel",
     "info",

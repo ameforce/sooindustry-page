@@ -203,6 +203,8 @@ export function buildQuickTunnelArgs(localUrl, prefixArgs = []) {
     localUrl,
     "--protocol",
     "http2",
+    "--edge-ip-version",
+    "4",
     "--no-autoupdate",
     "--loglevel",
     "info",
