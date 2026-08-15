@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { resolve } from "node:path";
 import test from "node:test";
 import { resolveDeploymentMetadata } from "../scripts/write-deployment-metadata.mjs";
 
@@ -24,4 +26,10 @@ test("Jenkins metadata is used when Cloudflare variables are unavailable", () =>
   );
 
   assert.deepEqual(metadata, { commitSha: "jenkins-sha", branch: "feature/example" });
+});
+
+test("Jenkins production verification matches the expected commit without quote-sensitive parsing", async () => {
+  const jenkinsfile = await readFile(resolve(import.meta.dirname, "../../Jenkinsfile"), "utf8");
+
+  assert.match(jenkinsfile, /case "\$metadata" in\s+\*"\$expected"\*\)/);
 });
