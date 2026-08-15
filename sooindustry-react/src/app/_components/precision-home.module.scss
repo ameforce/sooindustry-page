@@ -1343,10 +1343,12 @@
     padding: 0 20px 4px 0;
     gap: 12px;
     overflow-x: auto;
+    // Do not leave a cross-axis scroll range that can absorb the first 22px of a vertical swipe.
+    overflow-y: hidden;
     overscroll-behavior-inline: contain;
     -webkit-overflow-scrolling: touch;
-    // The rail owns horizontal touch gestures; vertical page scrolling begins outside it.
-    touch-action: pan-x pinch-zoom;
+    // Reserve vertical scroll and pinch zoom for the browser; only a completed horizontal swipe advances a card.
+    touch-action: pan-y pinch-zoom;
     border: 0;
     scroll-padding-inline: 0 20px;
     scroll-snap-type: x proximity;
@@ -1407,10 +1409,12 @@
     padding: 0 20px 4px 0;
     gap: 12px;
     overflow-x: auto;
+    // Do not leave a cross-axis scroll range that can absorb the first 22px of a vertical swipe.
+    overflow-y: hidden;
     overscroll-behavior-inline: contain;
     -webkit-overflow-scrolling: touch;
-    // The rail owns horizontal touch gestures; vertical page scrolling begins outside it.
-    touch-action: pan-x pinch-zoom;
+    // Reserve vertical scroll and pinch zoom for the browser; only a completed horizontal swipe advances a card.
+    touch-action: pan-y pinch-zoom;
     scroll-padding-inline: 0 20px;
     scroll-snap-type: x proximity;
     scrollbar-width: none;

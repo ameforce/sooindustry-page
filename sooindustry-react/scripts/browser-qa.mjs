@@ -450,13 +450,11 @@ async function main() {
           (rail) =>
             rail.scrollWidth <= rail.clientWidth ||
             rail.scrollSnapType === "none" ||
-            !rail.touchAction.includes("pan-x") ||
-            rail.touchAction.includes("pan-y") ||
             !rail.nativeScrollbarHidden ||
             !rail.rangeVisible,
         )
       ) {
-        throw new Error(`모바일 수평 레일 구성이 유효하지 않습니다: ${JSON.stringify(railInteraction)}`);
+        throw new Error(`모바일 수평 레일 기본 구성이 유효하지 않습니다: ${JSON.stringify(railInteraction)}`);
       }
       const movedRails = [
         await dragRail(cdp, "capabilities", false),
@@ -483,10 +481,20 @@ async function main() {
       ];
       if (
         touchedRails.some(
-          (result) => result.scrollLeft <= 0 || Math.abs(result.pageScrollDelta) > 2 || result.dragging !== null || result.lightboxOpen,
+          (result, index) =>
+            result.hitRail !== ["capabilities", "equipment"][index] ||
+            result.scrollLeft <= 40 ||
+            result.cardIndex !== 1 ||
+            Math.abs(result.pageScrollDelta) > 4 ||
+            result.dragging !== null ||
+            result.lightboxOpen ||
+            result.bodyLocked ||
+            result.touchTrace.moves.length === 0 ||
+            result.touchTrace.moves.some((move) => move.defaultPrevented || move.scrollLeft !== 0) ||
+            result.touchTrace.touchCancels !== 0,
         )
       ) {
-        throw new Error(`모바일 수평 레일 터치 축 잠금 실패: ${JSON.stringify(touchedRails)}`);
+        throw new Error(`모바일 수평 레일 터치가 페이지까지 함께 이동했습니다: ${JSON.stringify(touchedRails)}`);
       }
       railInteraction = railInteraction.map((rail, index) => ({ ...rail, touch: touchedRails[index] }));
 
@@ -496,23 +504,68 @@ async function main() {
       ];
       if (
         verticalTouchRails.some(
-          (result) =>
-            Math.abs(result.pageScrollDelta) > 2 ||
-            result.scrollLeft !== 0 ||
+          (result, index) =>
+            result.hitRail !== ["capabilities", "equipment"][index] ||
+            result.pageScrollDelta < 80 ||
+            Math.abs(result.scrollLeft) > 4 ||
+            result.scrollTop !== 0 ||
             result.dragging !== null ||
             result.lightboxOpen ||
-            result.bodyLocked,
+            result.bodyLocked ||
+            result.touchTrace.moves.length === 0 ||
+            result.touchTrace.moves.some((move) => move.defaultPrevented) ||
+            result.touchTrace.touchCancels !== 0,
         )
       ) {
-        throw new Error(`모바일 갤러리 수직 흔들림 차단 실패: ${JSON.stringify(verticalTouchRails)}`);
+        throw new Error(`모바일 레일 위 수직 터치가 페이지를 스크롤하지 못했습니다: ${JSON.stringify(verticalTouchRails)}`);
       }
       railInteraction = railInteraction.map((rail, index) => ({ ...rail, verticalTouch: verticalTouchRails[index] }));
 
-      const outsideVerticalTouch = await touchVerticalDragOutsideRail(cdp);
-      if (outsideVerticalTouch.pageScrollDelta < 40) {
-        throw new Error(`모바일 갤러리 외부 수직 스크롤 실패: ${JSON.stringify(outsideVerticalTouch)}`);
+      const ambiguousTouchRails = [
+        await touchAmbiguousDragRail(cdp, "capabilities"),
+        await touchAmbiguousDragRail(cdp, "equipment"),
+      ];
+      if (
+        ambiguousTouchRails.some(
+          (result, index) =>
+            result.hitRail !== ["capabilities", "equipment"][index] ||
+            result.pageScrollDelta < Math.abs(result.deltaY) * 0.6 ||
+            Math.abs(result.scrollLeft) > 4 ||
+            result.cardIndex !== 0 ||
+            result.dragging !== null ||
+            result.lightboxOpen ||
+            result.bodyLocked ||
+            result.touchTrace.moves.length === 0 ||
+            result.touchTrace.moves.some((move) => move.defaultPrevented) ||
+            result.touchTrace.touchCancels !== 0,
+        )
+      ) {
+        throw new Error(`모바일 레일의 모호한 대각 터치가 두 축을 함께 움직였습니다: ${JSON.stringify(ambiguousTouchRails)}`);
       }
-      railInteraction[0].outsideVerticalTouch = outsideVerticalTouch;
+      railInteraction = railInteraction.map((rail, index) => ({ ...rail, ambiguousTouch: ambiguousTouchRails[index] }));
+
+      const canceledTouchRails = [
+        await touchCancelRail(cdp, "capabilities"),
+        await touchCancelRail(cdp, "equipment"),
+      ];
+      if (
+        canceledTouchRails.some(
+          (result, index) =>
+            result.hitRail !== ["capabilities", "equipment"][index] ||
+            result.scrollLeft !== 0 ||
+            result.dragging !== null ||
+            result.lightboxOpen ||
+            result.bodyLocked ||
+            result.touchTrace.touchCancels !== 1,
+        )
+      ) {
+        throw new Error(`모바일 레일 터치 취소 후 상태가 남았습니다: ${JSON.stringify(canceledTouchRails)}`);
+      }
+      railInteraction = railInteraction.map((rail, index) => ({ ...rail, touchCancel: canceledTouchRails[index] }));
+
+      if (railInteraction.some((rail) => !rail.touchAction.includes("pan-y") || rail.touchAction.includes("pan-x"))) {
+        throw new Error(`모바일 레일은 세로 터치를 브라우저에 예약해야 합니다: ${JSON.stringify(railInteraction)}`);
+      }
 
       const rangeInteraction = await evaluate(cdp, `(() => {
         return [...document.querySelectorAll('[data-rail-range]')].map((range) => {
@@ -1134,6 +1187,44 @@ async function dragRail(cdp, railName, startOnLink) {
   })()`);
 }
 
+async function startRailTouchTrace(cdp, railName) {
+  await evaluate(cdp, `(() => {
+    window.__sooinRailTouchTrace?.dispose();
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    const trace = { moves: [], touchCancels: 0 };
+    const onMove = (event) => {
+      trace.moves.push({
+        cancelable: event.cancelable,
+        defaultPrevented: event.defaultPrevented,
+        scrollLeft: Math.round(rail.scrollLeft),
+        pageScrollY: Math.round(scrollY),
+      });
+    };
+    const onCancel = () => {
+      trace.touchCancels += 1;
+    };
+    rail.addEventListener('touchmove', onMove, { passive: true });
+    rail.addEventListener('touchcancel', onCancel, { passive: true });
+    window.__sooinRailTouchTrace = {
+      trace,
+      dispose() {
+        rail.removeEventListener('touchmove', onMove);
+        rail.removeEventListener('touchcancel', onCancel);
+      },
+    };
+  })()`);
+}
+
+async function stopRailTouchTrace(cdp) {
+  return evaluate(cdp, `(() => {
+    const active = window.__sooinRailTouchTrace;
+    if (!active) return { moves: [], touchCancels: 0 };
+    active.dispose();
+    delete window.__sooinRailTouchTrace;
+    return active.trace;
+  })()`);
+}
+
 async function touchDragRail(cdp, railName) {
   const geometry = await evaluate(cdp, `(() => {
     const rail = document.querySelector('[data-mobile-rail="${railName}"]');
@@ -1141,6 +1232,7 @@ async function touchDragRail(cdp, railName) {
     const previousScrollBehavior = root.style.scrollBehavior;
     root.style.scrollBehavior = 'auto';
     rail.scrollLeft = 0;
+    rail.scrollTop = 0;
     rail.scrollIntoView({ block: 'center' });
     root.style.scrollBehavior = previousScrollBehavior;
     const rect = rail.getBoundingClientRect();
@@ -1155,6 +1247,11 @@ async function touchDragRail(cdp, railName) {
     };
   })()`);
   await delay(80);
+  geometry.hitRail = await evaluate(
+    cdp,
+    `document.elementFromPoint(${geometry.startX}, ${geometry.startY})?.closest('[data-mobile-rail]')?.getAttribute('data-mobile-rail') ?? null`,
+  );
+  await startRailTouchTrace(cdp, railName);
 
   const touchPoint = (x, y) => ({
     x,
@@ -1181,20 +1278,31 @@ async function touchDragRail(cdp, railName) {
         ),
       ],
     });
+    await delay(16);
   }
   await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await delay(220);
+  await delay(700);
+  const touchTrace = await stopRailTouchTrace(cdp);
 
   return evaluate(cdp, `(() => {
     const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    const targets = [...rail.children].map((child) => child.getBoundingClientRect().left - rail.getBoundingClientRect().left + rail.scrollLeft);
+    const cardIndex = targets.reduce(
+      (nearest, target, index) => Math.abs(target - rail.scrollLeft) < Math.abs(targets[nearest] - rail.scrollLeft) ? index : nearest,
+      0,
+    );
     return {
       axis: 'horizontal-diagonal',
+      hitRail: ${JSON.stringify(geometry.hitRail)},
       deltaX: ${Math.round(geometry.endX - geometry.startX)},
       deltaY: ${Math.round(geometry.endY - geometry.startY)},
       scrollLeft: Math.round(rail.scrollLeft),
       pageScrollDelta: Math.round(scrollY) - ${geometry.pageScrollY},
+      cardIndex,
       dragging: rail.getAttribute('data-dragging'),
       lightboxOpen: Boolean(document.querySelector('[data-equipment-lightbox]')),
+      bodyLocked: document.body.classList.contains('scroll-lock'),
+      touchTrace: ${JSON.stringify(touchTrace)},
     };
   })()`);
 }
@@ -1206,6 +1314,7 @@ async function touchVerticalDragRail(cdp, railName) {
     const previousScrollBehavior = root.style.scrollBehavior;
     root.style.scrollBehavior = 'auto';
     rail.scrollLeft = 0;
+    rail.scrollTop = 0;
     rail.scrollIntoView({ block: 'center' });
     root.style.scrollBehavior = previousScrollBehavior;
     const rect = rail.getBoundingClientRect();
@@ -1220,6 +1329,11 @@ async function touchVerticalDragRail(cdp, railName) {
     };
   })()`);
   await delay(80);
+  geometry.hitRail = await evaluate(
+    cdp,
+    `document.elementFromPoint(${geometry.startX}, ${geometry.startY})?.closest('[data-mobile-rail]')?.getAttribute('data-mobile-rail') ?? null`,
+  );
+  await startRailTouchTrace(cdp, railName);
 
   const touchPoint = (x, y) => ({
     x,
@@ -1246,45 +1360,60 @@ async function touchVerticalDragRail(cdp, railName) {
         ),
       ],
     });
+    await delay(16);
   }
   await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await delay(220);
+  await delay(300);
+  const touchTrace = await stopRailTouchTrace(cdp);
 
   return evaluate(cdp, `(() => {
     const rail = document.querySelector('[data-mobile-rail="${railName}"]');
     return {
       axis: 'vertical',
+      hitRail: ${JSON.stringify(geometry.hitRail)},
+      touchAction: getComputedStyle(rail).touchAction,
       scrollLeft: Math.round(rail.scrollLeft),
+      scrollTop: Math.round(rail.scrollTop),
+      maxScrollTop: Math.round(rail.scrollHeight - rail.clientHeight),
+      overflowY: getComputedStyle(rail).overflowY,
       pageScrollDelta: Math.round(scrollY) - ${geometry.pageScrollY},
       pageScrollY: Math.round(scrollY),
       maxPageScrollY: Math.round(document.documentElement.scrollHeight - innerHeight),
       dragging: rail.getAttribute('data-dragging'),
       lightboxOpen: Boolean(document.querySelector('[data-equipment-lightbox]')),
       bodyLocked: document.body.classList.contains('scroll-lock'),
+      touchTrace: ${JSON.stringify(touchTrace)},
     };
   })()`);
 }
 
-async function touchVerticalDragOutsideRail(cdp) {
+async function touchAmbiguousDragRail(cdp, railName) {
   const geometry = await evaluate(cdp, `(() => {
-    const target = document.querySelector('#equipment [class*="equipmentHeading"]');
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
     const root = document.documentElement;
     const previousScrollBehavior = root.style.scrollBehavior;
     root.style.scrollBehavior = 'auto';
-    target.scrollIntoView({ block: 'center' });
+    rail.scrollLeft = 0;
+    rail.scrollTop = 0;
+    rail.scrollIntoView({ block: 'center' });
     root.style.scrollBehavior = previousScrollBehavior;
-    const rect = target.getBoundingClientRect();
+    const rect = rail.getBoundingClientRect();
     const startX = Math.min(innerWidth - 32, Math.max(32, rect.left + rect.width * 0.52));
     const startY = Math.min(innerHeight - 72, Math.max(120, rect.top + rect.height * 0.55));
     return {
       startX,
       startY,
-      endX: startX + 12,
-      endY: Math.max(28, startY - 190),
+      endX: Math.max(28, startX - 84),
+      endY: Math.max(28, startY - 84),
       pageScrollY: Math.round(scrollY),
     };
   })()`);
   await delay(80);
+  geometry.hitRail = await evaluate(
+    cdp,
+    `document.elementFromPoint(${geometry.startX}, ${geometry.startY})?.closest('[data-mobile-rail]')?.getAttribute('data-mobile-rail') ?? null`,
+  );
+  await startRailTouchTrace(cdp, railName);
 
   const touchPoint = (x, y) => ({
     x,
@@ -1300,8 +1429,93 @@ async function touchVerticalDragOutsideRail(cdp) {
     type: "touchStart",
     touchPoints: [touchPoint(geometry.startX, geometry.startY)],
   });
-  for (let step = 1; step <= 8; step += 1) {
-    const progress = step / 8;
+  const diagonalPoints = [
+    { x: geometry.startX, y: geometry.startY - 18 },
+    ...Array.from({ length: 7 }, (_, index) => {
+      const progress = (index + 1) / 7;
+      return {
+        x: geometry.startX + (geometry.endX - geometry.startX) * progress,
+        y: geometry.startY - 18 + (geometry.endY - (geometry.startY - 18)) * progress,
+      };
+    }),
+  ];
+  for (const point of diagonalPoints) {
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [touchPoint(point.x, point.y)],
+    });
+    await delay(16);
+  }
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  await delay(300);
+  const touchTrace = await stopRailTouchTrace(cdp);
+
+  return evaluate(cdp, `(() => {
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    const targets = [...rail.children].map((child) => child.getBoundingClientRect().left - rail.getBoundingClientRect().left + rail.scrollLeft);
+    const cardIndex = targets.reduce(
+      (nearest, target, index) => Math.abs(target - rail.scrollLeft) < Math.abs(targets[nearest] - rail.scrollLeft) ? index : nearest,
+      0,
+    );
+    return {
+      axis: 'ambiguous-diagonal',
+      hitRail: ${JSON.stringify(geometry.hitRail)},
+      deltaX: ${Math.round(geometry.endX - geometry.startX)},
+      deltaY: ${Math.round(geometry.endY - geometry.startY)},
+      scrollLeft: Math.round(rail.scrollLeft),
+      pageScrollDelta: Math.round(scrollY) - ${geometry.pageScrollY},
+      cardIndex,
+      dragging: rail.getAttribute('data-dragging'),
+      lightboxOpen: Boolean(document.querySelector('[data-equipment-lightbox]')),
+      bodyLocked: document.body.classList.contains('scroll-lock'),
+      touchTrace: ${JSON.stringify(touchTrace)},
+    };
+  })()`);
+}
+
+async function touchCancelRail(cdp, railName) {
+  const geometry = await evaluate(cdp, `(() => {
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    const root = document.documentElement;
+    const previousScrollBehavior = root.style.scrollBehavior;
+    root.style.scrollBehavior = 'auto';
+    rail.scrollLeft = 0;
+    rail.scrollTop = 0;
+    rail.scrollIntoView({ block: 'center' });
+    root.style.scrollBehavior = previousScrollBehavior;
+    const rect = rail.getBoundingClientRect();
+    const startX = Math.min(innerWidth - 32, Math.max(32, rect.left + rect.width * 0.52));
+    const startY = Math.min(innerHeight - 72, Math.max(120, rect.top + rect.height * 0.55));
+    return {
+      startX,
+      startY,
+      endX: Math.max(28, startX - 72),
+      endY: startY + 4,
+    };
+  })()`);
+  await delay(80);
+  geometry.hitRail = await evaluate(
+    cdp,
+    `document.elementFromPoint(${geometry.startX}, ${geometry.startY})?.closest('[data-mobile-rail]')?.getAttribute('data-mobile-rail') ?? null`,
+  );
+  await startRailTouchTrace(cdp, railName);
+
+  const touchPoint = (x, y) => ({
+    x,
+    y,
+    id: 4,
+    radiusX: 5,
+    radiusY: 5,
+    rotationAngle: 0,
+    force: 1,
+  });
+
+  await cdp.send("Input.dispatchTouchEvent", {
+    type: "touchStart",
+    touchPoints: [touchPoint(geometry.startX, geometry.startY)],
+  });
+  for (let step = 1; step <= 3; step += 1) {
+    const progress = step / 3;
     await cdp.send("Input.dispatchTouchEvent", {
       type: "touchMove",
       touchPoints: [
@@ -1311,14 +1525,23 @@ async function touchVerticalDragOutsideRail(cdp) {
         ),
       ],
     });
+    await delay(16);
   }
-  await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
-  await delay(220);
+  await cdp.send("Input.dispatchTouchEvent", { type: "touchCancel", touchPoints: [] });
+  await delay(120);
+  const touchTrace = await stopRailTouchTrace(cdp);
 
-  return evaluate(cdp, `(() => ({
-    pageScrollDelta: Math.round(scrollY) - ${geometry.pageScrollY},
-    pageScrollY: Math.round(scrollY),
-  }))()`);
+  return evaluate(cdp, `(() => {
+    const rail = document.querySelector('[data-mobile-rail="${railName}"]');
+    return {
+      hitRail: ${JSON.stringify(geometry.hitRail)},
+      scrollLeft: Math.round(rail.scrollLeft),
+      dragging: rail.getAttribute('data-dragging'),
+      lightboxOpen: Boolean(document.querySelector('[data-equipment-lightbox]')),
+      bodyLocked: document.body.classList.contains('scroll-lock'),
+      touchTrace: ${JSON.stringify(touchTrace)},
+    };
+  })()`);
 }
 
 function delay(milliseconds) {

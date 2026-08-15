@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 
 const DRAG_THRESHOLD = 6;
+const TOUCH_SWIPE_THRESHOLD = 36;
 const CLICK_SUPPRESSION_DURATION = 320;
 
 type GestureAxis = "pending" | "horizontal" | "vertical";
@@ -22,6 +23,7 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
         : null;
       const itemCount = rail.children.length;
       let pointerId: number | null = null;
+      let touchId: number | null = null;
       let startX = 0;
       let startY = 0;
       let startScrollLeft = 0;
@@ -100,8 +102,41 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
         stopDragging(preserveClickSuppression);
       };
 
+      const findTouch = (event: TouchEvent) => {
+        if (touchId === null) return null;
+        return Array.from(event.touches).find((touch) => touch.identifier === touchId)
+          ?? Array.from(event.changedTouches).find((touch) => touch.identifier === touchId)
+          ?? null;
+      };
+
+      const resetTouchGesture = () => {
+        touchId = null;
+        gestureAxis = "pending";
+        dragged = false;
+        suppressClick = false;
+        rail.removeAttribute("data-dragging");
+      };
+
+      const moveTouchRailByCard = (direction: -1 | 1) => {
+        const maxScroll = Math.max(rail.scrollWidth - rail.clientWidth, 0);
+        if (maxScroll <= 0) return;
+
+        const railLeft = rail.getBoundingClientRect().left;
+        const targets = Array.from(rail.children).map((child) =>
+          Math.min(maxScroll, Math.max(0, child.getBoundingClientRect().left - railLeft + rail.scrollLeft)),
+        );
+        const currentIndex = targets.reduce(
+          (nearest, target, index) =>
+            Math.abs(target - rail.scrollLeft) < Math.abs(targets[nearest] - rail.scrollLeft) ? index : nearest,
+          0,
+        );
+        const nextIndex = Math.min(targets.length - 1, Math.max(0, currentIndex + direction));
+        const behavior = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";
+        rail.scrollTo({ left: targets[nextIndex], behavior });
+      };
+
       const onPointerDown = (event: PointerEvent) => {
-        // Touch is compositor-native; this handler adds drag-to-scroll only for mouse and pen.
+        // Touch has its own intent gate below; this handler adds drag-to-scroll only for mouse and pen.
         if (event.pointerType === "touch" || !event.isPrimary || event.button !== 0) return;
         if (rail.scrollWidth <= rail.clientWidth) return;
 
@@ -133,6 +168,60 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
 
       const onPointerUp = (event: PointerEvent) => finishPointerDrag(event, dragged);
       const onPointerCancel = (event: PointerEvent) => finishPointerDrag(event, false);
+      const onTouchStart = (event: TouchEvent) => {
+        if (event.touches.length !== 1 || rail.scrollWidth <= rail.clientWidth) {
+          if (touchId !== null) resetTouchGesture();
+          return;
+        }
+
+        const touch = event.touches[0];
+        touchId = touch.identifier;
+        startGesture(touch.clientX, touch.clientY);
+      };
+
+      const onTouchMove = (event: TouchEvent) => {
+        if (event.touches.length !== 1) {
+          if (touchId !== null) resetTouchGesture();
+          return;
+        }
+
+        const touch = findTouch(event);
+        if (!touch) return;
+
+        const deltaX = touch.clientX - startX;
+        const deltaY = touch.clientY - startY;
+
+        if (gestureAxis === "pending") {
+          if (Math.max(Math.abs(deltaX), Math.abs(deltaY)) < DRAG_THRESHOLD) return;
+          if (Math.abs(deltaY) >= Math.abs(deltaX)) {
+            // Vertical and equal-diagonal gestures remain entirely native.
+            gestureAxis = "vertical";
+            return;
+          }
+          gestureAxis = "horizontal";
+        }
+      };
+
+      const finishTouchDrag = (event: TouchEvent) => {
+        if (touchId === null) return;
+        const endedTouch = Array.from(event.changedTouches).find((touch) => touch.identifier === touchId);
+        if (!endedTouch) return;
+
+        const shouldAdvance = gestureAxis === "horizontal" && Math.abs(endedTouch.clientX - startX) >= TOUCH_SWIPE_THRESHOLD;
+        const direction: -1 | 1 = endedTouch.clientX < startX ? 1 : -1;
+        resetTouchGesture();
+        if (!shouldAdvance) return;
+
+        suppressClick = true;
+        moveTouchRailByCard(direction);
+        scheduleClickReset();
+      };
+
+      const onTouchEnd = (event: TouchEvent) => finishTouchDrag(event);
+      const onTouchCancel = () => {
+        if (touchId === null) return;
+        resetTouchGesture();
+      };
       const onClickCapture = (event: MouseEvent) => {
         if (!suppressClick) return;
         event.preventDefault();
@@ -146,6 +235,10 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
       rail.addEventListener("pointermove", onPointerMove);
       rail.addEventListener("pointerup", onPointerUp);
       rail.addEventListener("pointercancel", onPointerCancel);
+      rail.addEventListener("touchstart", onTouchStart, { passive: true });
+      rail.addEventListener("touchmove", onTouchMove, { passive: true });
+      rail.addEventListener("touchend", onTouchEnd);
+      rail.addEventListener("touchcancel", onTouchCancel);
       rail.addEventListener("click", onClickCapture, true);
       rail.addEventListener("scroll", updateRailNavigator, { passive: true });
       range?.addEventListener("input", onRangeInput);
@@ -158,6 +251,10 @@ export function DragScrollDirector({ scopeId }: Readonly<{ scopeId: string }>) {
         rail.removeEventListener("pointermove", onPointerMove);
         rail.removeEventListener("pointerup", onPointerUp);
         rail.removeEventListener("pointercancel", onPointerCancel);
+        rail.removeEventListener("touchstart", onTouchStart);
+        rail.removeEventListener("touchmove", onTouchMove);
+        rail.removeEventListener("touchend", onTouchEnd);
+        rail.removeEventListener("touchcancel", onTouchCancel);
         rail.removeEventListener("click", onClickCapture, true);
         rail.removeEventListener("scroll", updateRailNavigator);
         range?.removeEventListener("input", onRangeInput);
