@@ -6,14 +6,24 @@ import "pretendard/dist/web/variable/pretendardvariable-dynamic-subset.css";
 import "./globals.scss";
 
 const siteUrl = getPublicSiteUrl();
-const title = "수인산업 | 열처리 산업로";
-const description = "열처리 산업로의 합리화와 효율화. 수인산업의 주요 설비와 실제 제작 이미지를 확인하세요.";
+const title = "수인산업 | 인천 열처리 산업로 설계·제작";
+const description =
+  "인천광역시 서구 수인산업은 진공로·침탄로·분위기로·전기로·가스연질화로 등 열처리 산업로를 설계·제작·설치합니다.";
 
 export const metadata: Metadata = {
   title,
   description,
-  applicationName: "SOOIN INDUSTRY",
-  keywords: ["수인산업", "열처리 산업로", "진공열처리로", "가스연질화로", "전기로", "침탄열처리로"],
+  applicationName: "수인산업",
+  keywords: [
+    "수인산업",
+    "인천 수인산업",
+    "인천 열처리",
+    "열처리 산업로",
+    "진공열처리로",
+    "가스연질화로",
+    "전기로",
+    "침탄열처리로",
+  ],
   metadataBase: siteUrl,
   alternates: { canonical: "/" },
   verification: {
@@ -26,6 +36,7 @@ export const metadata: Metadata = {
   openGraph: {
     title,
     description,
+    siteName: "수인산업",
     type: "website",
     url: "/",
     locale: "ko_KR",
