@@ -16,6 +16,9 @@ export const metadata: Metadata = {
   keywords: ["수인산업", "열처리 산업로", "진공열처리로", "가스연질화로", "전기로", "침탄열처리로"],
   metadataBase: siteUrl,
   alternates: { canonical: "/" },
+  verification: {
+    google: "jcLkc50rZuZP-gVlCMawjoUPpxqDFdOo5eM4MaHJJxA",
+  },
   icons: {
     icon: [{ url: "/img/sooin-logo.gif", type: "image/gif" }],
     shortcut: ["/img/sooin-logo.gif"],
