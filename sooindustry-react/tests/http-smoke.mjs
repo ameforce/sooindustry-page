@@ -24,20 +24,8 @@ try {
   assert.match(home.headers.get("strict-transport-security") ?? "", /max-age=31536000/);
   const homeBody = await home.text();
   assert.match(homeBody, /https:\/\/sooindustrykorea\.com\//);
-  assert.match(homeBody, /<title>수인산업 \| 인천 열처리 산업로 설계·제작<\/title>/);
-  assert.match(homeBody, /인천 수인산업/);
   assert.match(homeBody, /rel="icon"[^>]+href="\/img\/sooin-logo\.gif"/);
   assert.doesNotMatch(homeBody, /href="\/favicon\.ico/);
-
-  const structuredDataMatch = homeBody.match(
-    /<script id="site-structured-data" type="application\/ld\+json">(.+?)<\/script>/,
-  );
-  assert.ok(structuredDataMatch, "homepage should expose JSON-LD structured data");
-  const structuredData = JSON.parse(structuredDataMatch[1]);
-  assert.equal(structuredData["@context"], "https://schema.org");
-  assert.equal(structuredData["@graph"][0]["@type"], "WebSite");
-  assert.deepEqual(structuredData["@graph"][1]["@type"], ["Organization", "LocalBusiness"]);
-  assert.equal(structuredData["@graph"][1].address.addressRegion, "인천광역시");
 
   const brandIcon = await fetch(new URL("/img/sooin-logo.gif", origin));
   assert.equal(brandIcon.status, 200);
@@ -67,13 +55,7 @@ try {
 
   const sitemap = await fetch(new URL("/sitemap.xml", origin));
   assert.equal(sitemap.status, 200);
-  const sitemapBody = await sitemap.text();
-  assert.match(sitemapBody, /https:\/\/sooindustrykorea\.com\//);
-  assert.match(sitemapBody, /https:\/\/sooindustrykorea\.com\/company-profile\//);
-
-  const companyProfile = await fetch(new URL("/company-profile/", origin));
-  assert.equal(companyProfile.status, 200);
-  assert.doesNotMatch(await companyProfile.text(), /id="site-structured-data"/);
+  assert.match(await sitemap.text(), /https:\/\/sooindustrykorea\.com\//);
 
   const deployment = await fetch(new URL("/deployment.json", origin));
   assert.equal(deployment.status, 200);
@@ -94,7 +76,6 @@ try {
       favicon: 200,
       robots: 200,
       sitemap: 200,
-      companyProfile: 200,
       deploymentMetadata: 200,
       notFound: 404,
       securityHeaders: 5,

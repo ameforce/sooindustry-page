@@ -20,10 +20,10 @@ export function PrecisionHome() {
       <BackToTopButton />
       <section className={styles.hero} aria-labelledby="hero-title">
         <div className={styles.heroCopy} data-reveal>
-          <p className={styles.eyebrow}>INCHEON · SOOIN INDUSTRY</p>
+          <p className={styles.eyebrow}>SOOIN INDUSTRY</p>
           <h1 id="hero-title" data-wrap-check>
-            <span className={styles.phrase}>인천 수인산업</span>{" "}
-            <span className={styles.phrase}>공정 맞춤 열처리 산업로</span>
+            <span className={styles.phrase}>공정에 맞춘</span>{" "}
+            <span className={styles.phrase}>열처리 산업로</span>
           </h1>
           <p className={styles.lead} data-wrap-check>
             상담부터 설계, 제작, 설치까지. 수인산업은 실제 제작 설비를 근거로 필요한 열처리 시스템을 함께

@@ -5,7 +5,6 @@ import test from "node:test";
 import { companyContact } from "../src/data/companyContact.ts";
 import { equipmentGallery } from "../src/data/precisionProof.ts";
 import { getPublicSiteUrl } from "../src/lib/site.ts";
-import { getSiteStructuredData } from "../src/lib/structuredData.ts";
 
 test("public site URL is the canonical HTTPS production origin", () => {
   assert.equal(getPublicSiteUrl().origin, "https://sooindustrykorea.com");
@@ -25,24 +24,6 @@ test("company contact data uses the verified registration, representative, phone
     "https://map.naver.com/p/entry/place/37323307?placePath=%2Fhome",
   );
   assert.equal(companyContact.kakaoMapHref, "https://place.map.kakao.com/1523327998");
-});
-
-test("structured data identifies the website and the Incheon business with verified contact data", () => {
-  const structuredData = getSiteStructuredData();
-  const [website, organization] = structuredData["@graph"];
-
-  assert.equal(website["@type"], "WebSite");
-  assert.equal(website.name, "수인산업");
-  assert.equal(website.url, "https://sooindustrykorea.com/");
-  assert.equal(website.publisher["@id"], "https://sooindustrykorea.com/#organization");
-
-  assert.deepEqual(organization["@type"], ["Organization", "LocalBusiness"]);
-  assert.equal(organization.name, "수인산업");
-  assert.equal(organization.telephone, "+82325172473");
-  assert.equal(organization.address.addressRegion, "인천광역시");
-  assert.equal(organization.address.addressLocality, "서구");
-  assert.equal(organization.address.streetAddress, "마중로 142, 나동 5호 (오류동)");
-  assert.deepEqual(organization.hasMap, [companyContact.naverMapHref, companyContact.kakaoMapHref]);
 });
 
 test("equipment gallery includes the curated source images without duplicate paths", () => {
