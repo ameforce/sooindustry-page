@@ -26,6 +26,9 @@ export const metadata: Metadata = {
   ],
   metadataBase: siteUrl,
   alternates: { canonical: "/" },
+  verification: {
+    google: "jcLkc50rZuZP-gVlCMawjoUPpxqDFdOo5eM4MaHJJxA",
+  },
   icons: {
     icon: [{ url: "/img/sooin-logo.gif", type: "image/gif" }],
     shortcut: ["/img/sooin-logo.gif"],
